@@ -7,5 +7,7 @@ Learn is a platform that tries to improve learning a friend group with large amb
 - Svelte
 
 #### Backend
-- Spring
+- Spring Webflux (Reactive for max. Performance)
 - Thymeleaf (Template Engine)
+- PostgreSQL (Database)
+- R2DBC (Database Driver)
