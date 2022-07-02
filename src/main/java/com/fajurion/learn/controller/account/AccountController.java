@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/account")
+@RequestMapping("/api/account")
 public class AccountController {
 
     @Autowired
@@ -40,7 +40,7 @@ public class AccountController {
 
             // false: Invalid username
             if(!success) {
-                return Mono.error(new RuntimeException("Invalid username or password."));
+                return Mono.error(new RuntimeException("login.invalid"));
             }
 
             // Get account to verify password
@@ -49,11 +49,11 @@ public class AccountController {
 
             // Check password hash
             if(!PasswordUtil.getHash(loginForm.username(), loginForm.password()).equals(account.getPassword())) {
-                return Mono.error(new RuntimeException("Invalid username or password."));
+                return Mono.error(new RuntimeException("login.invalid"));
             }
 
             // Create a new session
-            return sessionRepository.save(new Session(UUID.randomUUID().toString(), loginForm.username(), ""));
+            return sessionRepository.save(new Session(UUID.randomUUID().toString(), account.getId(), ""));
         }).flatMap(session -> Mono.just(new LoginResponse(true, false, session.getToken())))
 
                 // Error handling
@@ -81,7 +81,7 @@ public class AccountController {
         return accountRepository.getAccountByUsernameIgnoreCase(registerForm.username()).hasElement().flatMap(exists -> {
 
             if(exists) {
-                return Mono.error(new RuntimeException("Username already exists."));
+                return Mono.error(new RuntimeException("register.username.exists"));
             }
 
             // Check if email already exists
@@ -89,7 +89,7 @@ public class AccountController {
         }).hasElement().flatMap(exists -> {
 
             if(exists) {
-                return Mono.error(new RuntimeException("E-Mail already exists."));
+                return Mono.error(new RuntimeException("register.email.exists"));
             }
 
             // Check if invite exists
@@ -97,7 +97,7 @@ public class AccountController {
         }).flatMap(invite -> {
 
             if(invite == null) {
-                return Mono.error(new RuntimeException("Invite doesn't exists."));
+                return Mono.error(new RuntimeException("register.invite.not_found"));
             }
 
             // Delete invite
@@ -109,13 +109,13 @@ public class AccountController {
         }).flatMap(account -> {
 
             // Create new session
-            return sessionRepository.save(new Session(UUID.randomUUID().toString(), account.getUsername(), ""));
+            return sessionRepository.save(new Session(UUID.randomUUID().toString(), account.getId(), ""));
         }).map(session -> {
 
             // Return login response with token
             return new LoginResponse(true, false, session.getToken());
         }).onErrorResume(RuntimeException.class, e -> Mono.just(new LoginResponse(false, false, e.getMessage())))
-                .onErrorResume(e -> Mono.just(new LoginResponse(false, true, "A serverside error occurred.")));
+                .onErrorResume(e -> Mono.just(new LoginResponse(false, true, "server.error")));
     }
 
     // Record for register form

@@ -19,7 +19,10 @@ public class Session {
     private String token;
 
     @Column
+    final int id;
+
+    @Column
     @NonNull
-    private String username, data;
+    private String data;
 
 }
