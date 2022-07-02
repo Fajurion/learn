@@ -1,6 +1,7 @@
 package com.fajurion.learn.repository.account;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
@@ -17,7 +18,8 @@ public class Account {
     private int id;
 
     @Column
-    private String username, email, password, data;
+    @NonNull
+    private String username, email, rank, password, data;
 
     @Column
     private int invitor;

@@ -20,12 +20,18 @@ public class AccountController {
     @Autowired
     private SessionRepository sessionRepository;
 
+    /**
+     * Login endpoint
+     *
+     * @param loginForm Login form from the client
+     * @return Login response
+     */
     @RequestMapping("/login")
     @ResponseBody
-    public Mono<LoginResponse> test(@RequestBody LoginForm login) {
+    public Mono<LoginResponse> login(@RequestBody LoginForm loginForm) {
 
         // Check if user exists
-        return accountRepository.getAccountsByUsername(login.username()).hasElements().flatMap(success -> {
+        return accountRepository.getAccountsByUsername(loginForm.username()).hasElements().flatMap(success -> {
 
             // false: Invalid username
             if(!success) {
@@ -33,16 +39,16 @@ public class AccountController {
             }
 
             // Get account to verify password
-            return accountRepository.getAccountsByUsername(login.username()).elementAt(0);
+            return accountRepository.getAccountsByUsername(loginForm.username()).elementAt(0);
         }).flatMap(account -> {
 
             // Check password hash
-            if(!PasswordUtil.getHash(login.username(), login.password()).equals(account.getPassword())) {
+            if(!PasswordUtil.getHash(loginForm.username(), loginForm.password()).equals(account.getPassword())) {
                 return Mono.error(new RuntimeException("Invalid username or password."));
             }
 
             // Create a new session
-            return sessionRepository.save(new Session(UUID.randomUUID().toString(), login.username(), ""));
+            return sessionRepository.save(new Session(UUID.randomUUID().toString(), loginForm.username(), ""));
         }).flatMap(session -> Mono.just(new LoginResponse(true, false, session.getToken())))
 
                 // Error handling
@@ -50,12 +56,31 @@ public class AccountController {
                 .onErrorResume(error -> Mono.just(new LoginResponse(false, true, error.getMessage())));
     }
 
+    // Record for login form
     public record LoginForm(String username, String password) {}
-    public record LoginResponse(boolean success, boolean error, String token) {}
 
-    @RequestMapping("/register/start")
-    public Mono<String> startRegister() {
-        return Mono.just("test");
+    // Record for login/register response
+    public record LoginResponse(boolean success, boolean error, String data) {}
+
+    /**
+     * Endpoint for account registration
+     *
+     * @param registerForm Form for account registration
+     * @return Register response
+     */
+    @RequestMapping("/register")
+    @ResponseBody
+    public Mono<LoginResponse> startRegister(@RequestBody RegisterForm registerForm) {
+        return accountRepository.getAccountsByUsername(registerForm.username()).hasElements().flatMap(exists -> {
+
+            if(exists) {
+                return Mono.error(new RuntimeException("Username already exists."));
+            }
+
+            return Mono.just(new LoginResponse(false, true, "d"));
+        }).onErrorResume(e -> Mono.just(new LoginResponse(false, false, e.getMessage())));
     }
 
+    // Record for register form
+    public record RegisterForm(String email, String username, String password, String invite) {}
 }

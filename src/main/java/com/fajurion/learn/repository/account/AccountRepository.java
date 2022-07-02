@@ -12,4 +12,6 @@ public interface AccountRepository extends ReactiveCrudRepository<Account, Integ
 
     Flux<Account> getAccountsByEmail(@Param("email") String email);
 
+    Flux<Account> getAccountsByUsernameIgnoreCase(@Param("username") String username);
+
 }

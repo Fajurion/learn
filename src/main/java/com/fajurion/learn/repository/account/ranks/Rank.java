@@ -1,21 +1,24 @@
-package com.fajurion.learn.repository.account.invite;
+package com.fajurion.learn.repository.account.ranks;
 
 import lombok.Data;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table("invites")
+@Table("ranks")
 @Data
-public class Invite {
+@RequiredArgsConstructor
+public class Rank {
 
     @Id
-    private String code;
+    int id;
 
     @Column
-    private String data;
+    final String name;
 
     @Column
-    private int creator;
+    final int level;
 
 }
