@@ -1,6 +1,8 @@
 package com.fajurion.learn.controller.account;
 
+import com.fajurion.learn.repository.account.Account;
 import com.fajurion.learn.repository.account.AccountRepository;
+import com.fajurion.learn.repository.account.invite.InviteRepository;
 import com.fajurion.learn.repository.account.session.Session;
 import com.fajurion.learn.repository.account.session.SessionRepository;
 import com.fajurion.learn.util.PasswordUtil;
@@ -19,6 +21,9 @@ public class AccountController {
 
     @Autowired
     private SessionRepository sessionRepository;
+
+    @Autowired
+    private InviteRepository inviteRepository;
 
     /**
      * Login endpoint
@@ -70,15 +75,47 @@ public class AccountController {
      */
     @RequestMapping("/register")
     @ResponseBody
-    public Mono<LoginResponse> startRegister(@RequestBody RegisterForm registerForm) {
-        return accountRepository.getAccountsByUsername(registerForm.username()).hasElements().flatMap(exists -> {
+    public Mono<LoginResponse> register(@RequestBody RegisterForm registerForm) {
+
+        // Check if username already exists
+        return accountRepository.getAccountByUsernameIgnoreCase(registerForm.username()).hasElement().flatMap(exists -> {
 
             if(exists) {
                 return Mono.error(new RuntimeException("Username already exists."));
             }
 
-            return Mono.just(new LoginResponse(false, true, "d"));
-        }).onErrorResume(e -> Mono.just(new LoginResponse(false, false, e.getMessage())));
+            // Check if email already exists
+            return accountRepository.getAccountByEmailIgnoreCase(registerForm.email());
+        }).hasElement().flatMap(exists -> {
+
+            if(exists) {
+                return Mono.error(new RuntimeException("E-Mail already exists."));
+            }
+
+            // Check if invite exists
+            return inviteRepository.findById(registerForm.invite());
+        }).flatMap(invite -> {
+
+            if(invite == null) {
+                return Mono.error(new RuntimeException("Invite doesn't exists."));
+            }
+
+            // Delete invite
+            return inviteRepository.delete(invite);
+        }).flatMap(invite -> {
+
+            // Register account
+            return accountRepository.save(new Account(registerForm.username(), registerForm.email(), "User", PasswordUtil.getHash(registerForm.username(), registerForm.password()), ""));
+        }).flatMap(account -> {
+
+            // Create new session
+            return sessionRepository.save(new Session(UUID.randomUUID().toString(), account.getUsername(), ""));
+        }).map(session -> {
+
+            // Return login response with token
+            return new LoginResponse(true, false, session.getToken());
+        }).onErrorResume(RuntimeException.class, e -> Mono.just(new LoginResponse(false, false, e.getMessage())))
+                .onErrorResume(e -> Mono.just(new LoginResponse(false, true, "A serverside error occurred.")));
     }
 
     // Record for register form

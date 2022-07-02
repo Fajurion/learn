@@ -4,6 +4,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Repository
 public interface AccountRepository extends ReactiveCrudRepository<Account, Integer> {
@@ -12,6 +13,8 @@ public interface AccountRepository extends ReactiveCrudRepository<Account, Integ
 
     Flux<Account> getAccountsByEmail(@Param("email") String email);
 
-    Flux<Account> getAccountsByUsernameIgnoreCase(@Param("username") String username);
+    Mono<Account> getAccountByUsernameIgnoreCase(@Param("username") String username);
+
+    Mono<Account> getAccountByEmailIgnoreCase(@Param("email") String email);
 
 }
