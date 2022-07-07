@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicReference;
 @RestController
 @RequestMapping("/api/image")
 public class ImageController {
-
     @Autowired
     private RankRepository rankRepository;
 
