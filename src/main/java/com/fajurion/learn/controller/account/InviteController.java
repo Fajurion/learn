@@ -7,10 +7,7 @@ import com.fajurion.learn.repository.account.ranks.RankRepository;
 import com.fajurion.learn.repository.account.session.SessionRepository;
 import com.fajurion.learn.util.ConstantConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -41,7 +38,7 @@ public class InviteController {
     }
 
     @RequestMapping("/create")
-    @ResponseBody
+    @ResponseBody @CrossOrigin
     public Mono<InviteCreateResponse> createInvite(@RequestBody InviteCreateForm inviteCreateForm) {
 
         // Atomic reference for user account id

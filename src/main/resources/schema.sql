@@ -11,4 +11,4 @@ create table if not exists topics (id SERIAL NOT NULL, parent INT, name VARCHAR(
 create table if not exists images (id SERIAL NOT NULL, creator INT, image bytea, PRIMARY KEY (id));
 create table if not exists posts (id SERIAL NOT NULL, topic INT, creator INT, likes INT, date BIGINT, content TEXT, PRIMARY KEY (id));
 create table if not exists likes (account INT, post INT, PRIMARY KEY (account));
-create table if not exists comments (id SERIAL NOT NULL, creator INT, content TEXT, PRIMARY KEY (id));
+create table if not exists comments (id SERIAL NOT NULL, topic INT, post INT, creator INT, content TEXT, PRIMARY KEY (id));

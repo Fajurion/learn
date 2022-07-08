@@ -7,10 +7,7 @@ import com.fajurion.learn.repository.topic.TopicRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
@@ -32,7 +29,7 @@ public class TopicController {
     }
 
     @RequestMapping("/list")
-    @ResponseBody
+    @ResponseBody @CrossOrigin
     public Mono<ListTopicsResponse> listSubTopics(@RequestBody ListTopicsForm topicsForm) {
 
         // Check if session is valid

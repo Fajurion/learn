@@ -56,7 +56,7 @@ public class ImageController {
      * @return The image upload response
      */
     @PostMapping(value = "/upload", consumes = {"multipart/form-data"})
-    @ResponseBody
+    @ResponseBody @CrossOrigin
     public Mono<ImageUploadResponse> uploadImage(@RequestPart("file") Mono<FilePart> file,
                                     @RequestHeader("token") String token,
                                     @RequestHeader("Content-Length") int contentLength) {
@@ -119,7 +119,7 @@ public class ImageController {
     // Response to uploading an image
     public record ImageUploadResponse(boolean success, boolean error, String data) {}
 
-    @GetMapping(value = "/download/{id}", produces = MediaType.IMAGE_JPEG_VALUE)
+    @GetMapping(value = "/download/{id}", produces = MediaType.IMAGE_JPEG_VALUE) @CrossOrigin
     public Mono<Resource> download(@PathVariable int id, @RequestHeader("token") String token) {
 
         // Check if session is valid

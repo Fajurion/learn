@@ -39,7 +39,7 @@ public class AccountController {
      * @return Login response
      */
     @RequestMapping("/login")
-    @ResponseBody
+    @ResponseBody @CrossOrigin
     public Mono<LoginResponse> login(@RequestBody LoginForm loginForm) {
 
         // Check if user exists
@@ -81,7 +81,7 @@ public class AccountController {
      * @return Register response
      */
     @RequestMapping("/register")
-    @ResponseBody
+    @ResponseBody @CrossOrigin
     public Mono<LoginResponse> register(@RequestBody RegisterForm registerForm) {
 
         // Check if username already exists

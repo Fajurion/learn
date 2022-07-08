@@ -18,4 +18,7 @@ public class Comment {
     @Column
     final String content;
 
+    @Column
+    final int post, topic;
+
 }

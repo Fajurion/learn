@@ -7,10 +7,7 @@ import com.fajurion.learn.repository.topic.Topic;
 import com.fajurion.learn.repository.topic.TopicRepository;
 import com.fajurion.learn.util.ConstantConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -40,7 +37,7 @@ public class TopicCreationController {
     }
 
     @RequestMapping("/create")
-    @ResponseBody
+    @ResponseBody @CrossOrigin
     public Mono<CreateTopicResponse> createTopic(@RequestBody CreateTopicForm topicForm) {
 
         // Check if name is valid
