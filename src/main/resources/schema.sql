@@ -5,7 +5,7 @@ create table if not exists invites (code VARCHAR(32), creator INT, data TEXT, PR
 create table if not exists ranks (id SERIAL NOT NULL, name VARCHAR(32), level INT, PRIMARY KEY (id));
 
 /* Create tables for Topics and Subtopics */
-create table if not exists topics (id SERIAL NOT NULL, parent INT, name VARCHAR(50), creator INT, locked BOOLEAN, PRIMARY KEY (id));
+create table if not exists topics (id SERIAL NOT NULL, parent INT, name VARCHAR(50), creator INT, locked BOOLEAN, isParent BOOLEAN, PRIMARY KEY (id));
 
 /* Create tables for Image Storage, Comments and Post Storage */
 create table if not exists images (id SERIAL NOT NULL, creator INT, image bytea, PRIMARY KEY (id));

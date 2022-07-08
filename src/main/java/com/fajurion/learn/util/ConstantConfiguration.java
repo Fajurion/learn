@@ -4,6 +4,7 @@ public class ConstantConfiguration {
 
     // Permission levels
     public static final int PERMISSION_LEVEL_UPLOAD_IMAGE = 10;
+    public static final int PERMISSION_LEVEL_CREATE_TOPIC = 5;
     public static final int PERMISSION_LEVEL_CREATE_INVITE = 60;
 
     // Max file size

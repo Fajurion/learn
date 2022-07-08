@@ -1,6 +1,7 @@
 package com.fajurion.learn.repository.topic;
 
 import lombok.Data;
+import lombok.NonNull;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -22,6 +23,7 @@ public class Topic {
     final int creator;
 
     @Column
-    final boolean locked;
+    @NonNull
+    private boolean locked, isParent;
 
 }
