@@ -1,6 +1,5 @@
 package com.fajurion.learn.controller.topic;
 
-import com.fajurion.learn.controller.account.AccountController;
 import com.fajurion.learn.repository.account.session.SessionRepository;
 import com.fajurion.learn.repository.topic.Topic;
 import com.fajurion.learn.repository.topic.TopicRepository;
@@ -59,6 +58,37 @@ public class TopicController {
 
     // Record for sub topics response
     public record ListTopicsResponse(boolean success, boolean error, String message, ArrayList<Topic> topics) {}
+
+
+    @RequestMapping("/get")
+    @ResponseBody @CrossOrigin
+    public Mono<GetTopicResponse> get(@RequestBody ListTopicsForm form) {
+
+        // Check if session is valid
+        return sessionRepository.findById(form.token()).flatMap(session -> {
+
+            if(session == null) {
+                return Mono.error(new RuntimeException("session.expired"));
+            }
+
+            // Get the topic
+            return topicRepository.findById(form.topic());
+        }).flatMap(topic -> {
+
+            if(topic == null) {
+                return Mono.error(new RuntimeException("not_found"));
+            }
+
+            // Return topic
+            return Mono.just(new GetTopicResponse(true, false, "success", topic));
+        })
+                // Error handling
+                .onErrorResume(RuntimeException.class, error -> Mono.just(new GetTopicResponse(false, false, error.getMessage(), null)))
+                .onErrorResume(error -> Mono.just(new GetTopicResponse(false, true, "server.error", null)));
+    }
+
+    // Record for topic get response
+    public record GetTopicResponse(boolean success, boolean error, String message, Topic topic) {}
 
     @EventListener
     public void onStartup(ApplicationStartedEvent event) {
