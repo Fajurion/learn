@@ -16,14 +16,21 @@ import java.util.UUID;
 @RequestMapping("/api/account")
 public class AccountController {
 
-    @Autowired
-    private AccountRepository accountRepository;
+    // Repository for getting account data
+    private final AccountRepository accountRepository;
+
+    // Repository for checking sessions
+    private final SessionRepository sessionRepository;
+
+    // Repository for checking invites
+    private final InviteRepository inviteRepository;
 
     @Autowired
-    private SessionRepository sessionRepository;
-
-    @Autowired
-    private InviteRepository inviteRepository;
+    public AccountController(AccountRepository accountRepository, SessionRepository sessionRepository, InviteRepository inviteRepository) {
+        this.accountRepository = accountRepository;
+        this.sessionRepository = sessionRepository;
+        this.inviteRepository = inviteRepository;
+    }
 
     /**
      * Login endpoint

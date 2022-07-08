@@ -10,25 +10,35 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
+@RestController
 @RequestMapping("/api/invite")
 public class InviteController {
 
-    @Autowired
-    private SessionRepository sessionRepository;
+    // Repository for checking sessions
+    private final SessionRepository sessionRepository;
+
+    // Repository for getting account data
+    private final AccountRepository accountRepository;
+
+    // Repository for creating/checking invites
+    private final InviteRepository inviteRepository;
+
+    // Repository for getting rank permission level
+    private final RankRepository rankRepository;
 
     @Autowired
-    private AccountRepository accountRepository;
-
-    @Autowired
-    private InviteRepository inviteRepository;
-
-    @Autowired
-    private RankRepository rankRepository;
+    public InviteController(SessionRepository sessionRepository, AccountRepository accountRepository, InviteRepository inviteRepository, RankRepository rankRepository) {
+        this.sessionRepository = sessionRepository;
+        this.accountRepository = accountRepository;
+        this.inviteRepository = inviteRepository;
+        this.rankRepository = rankRepository;
+    }
 
     @RequestMapping("/create")
     @ResponseBody

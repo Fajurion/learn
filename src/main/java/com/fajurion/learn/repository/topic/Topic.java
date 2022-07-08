@@ -13,6 +13,9 @@ public class Topic {
     private int id;
 
     @Column
+    final int parent;
+
+    @Column
     final String name;
 
     @Column

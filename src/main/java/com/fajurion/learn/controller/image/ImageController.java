@@ -22,20 +22,30 @@ import java.util.concurrent.atomic.AtomicReference;
 @RestController
 @RequestMapping("/api/image")
 public class ImageController {
-    @Autowired
-    private RankRepository rankRepository;
+
+    // Repository for getting rank permission level
+    private final RankRepository rankRepository;
+
+    // Repository for getting account data
+    private final AccountRepository accountRepository;
+
+    // Repository for checking sessions
+    private final SessionRepository sessionRepository;
+
+    // Repository for uploading/downloading images
+    private final ImageRepository imageRepository;
+
+    // Service for image converting
+    private final ImageService service;
 
     @Autowired
-    private AccountRepository accountRepository;
-
-    @Autowired
-    private SessionRepository sessionRepository;
-
-    @Autowired
-    private ImageRepository imageRepository;
-
-    @Autowired
-    private ImageService service;
+    public ImageController(RankRepository rankRepository, AccountRepository accountRepository, SessionRepository sessionRepository, ImageRepository imageRepository, ImageService service) {
+        this.rankRepository = rankRepository;
+        this.accountRepository = accountRepository;
+        this.sessionRepository = sessionRepository;
+        this.imageRepository = imageRepository;
+        this.service = service;
+    }
 
     /**
      * Upload an image to the database
