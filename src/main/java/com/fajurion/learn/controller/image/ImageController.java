@@ -1,4 +1,4 @@
-package com.fajurion.learn.frontend.controller.image;
+package com.fajurion.learn.controller.image;
 
 import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.ranks.RankRepository;

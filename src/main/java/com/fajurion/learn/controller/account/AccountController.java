@@ -1,4 +1,4 @@
-package com.fajurion.learn.frontend.controller.account;
+package com.fajurion.learn.controller.account;
 
 import com.fajurion.learn.repository.account.Account;
 import com.fajurion.learn.repository.account.AccountRepository;

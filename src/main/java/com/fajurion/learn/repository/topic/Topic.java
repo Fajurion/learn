@@ -1,24 +1,24 @@
-package com.fajurion.learn.repository.post;
+package com.fajurion.learn.repository.topic;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table("posts")
+@Table("topics")
 @Data
-public class Post {
+public class Topic {
 
     @Id
     private int id;
 
     @Column
-    final int topic, creator, likes;
+    final String name;
 
     @Column
-    final long date;
+    final int creator;
 
     @Column
-    final String content;
+    final boolean locked;
 
 }
