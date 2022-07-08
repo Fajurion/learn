@@ -54,12 +54,16 @@ public class LearnApplication {
 	}
 
 	// Rank repository for storing all the ranks
-	@Autowired
-	private RankRepository rankRepository;
+	private final RankRepository rankRepository;
 
 	// Account repository that stores all the user accounts
+	private final AccountRepository accountRepository;
+
 	@Autowired
-	private AccountRepository accountRepository;
+	public LearnApplication(RankRepository rankRepository, AccountRepository accountRepository) {
+		this.rankRepository = rankRepository;
+		this.accountRepository = accountRepository;
+	}
 
 	/**
 	 * Create ranks on application startup
