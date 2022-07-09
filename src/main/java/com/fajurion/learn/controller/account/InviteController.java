@@ -4,7 +4,7 @@ import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.invite.Invite;
 import com.fajurion.learn.repository.account.invite.InviteRepository;
 import com.fajurion.learn.repository.account.ranks.RankRepository;
-import com.fajurion.learn.repository.account.session.SessionRepository;
+import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.util.ConstantConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -17,8 +17,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @RequestMapping("/api/invite")
 public class InviteController {
 
-    // Repository for checking sessions
-    private final SessionRepository sessionRepository;
+    // Service for checking sessions
+    private final SessionService sessionService;
 
     // Repository for getting account data
     private final AccountRepository accountRepository;
@@ -30,8 +30,8 @@ public class InviteController {
     private final RankRepository rankRepository;
 
     @Autowired
-    public InviteController(SessionRepository sessionRepository, AccountRepository accountRepository, InviteRepository inviteRepository, RankRepository rankRepository) {
-        this.sessionRepository = sessionRepository;
+    public InviteController(SessionService sessionService, AccountRepository accountRepository, InviteRepository inviteRepository, RankRepository rankRepository) {
+        this.sessionService = sessionService;
         this.accountRepository = accountRepository;
         this.inviteRepository = inviteRepository;
         this.rankRepository = rankRepository;
@@ -45,7 +45,7 @@ public class InviteController {
         AtomicReference<Integer> userID = new AtomicReference<>();
 
         // Check if session is valid
-        return sessionRepository.findById(inviteCreateForm.token()).flatMap(session -> {
+        return sessionService.checkAndRefreshSession(inviteCreateForm.token()).flatMap(session -> {
 
             if(session == null) {
                 return Mono.error(new RuntimeException("session.expired"));

@@ -1,6 +1,6 @@
 package com.fajurion.learn.controller.topic;
 
-import com.fajurion.learn.repository.account.session.SessionRepository;
+import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.topic.Topic;
 import com.fajurion.learn.repository.topic.TopicRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,15 +15,15 @@ import java.util.ArrayList;
 @RequestMapping("/api/topic")
 public class TopicController {
 
-    // Repository for checking sessions
-    private final SessionRepository sessionRepository;
+    // Service for checking sessions
+    private final SessionService sessionService;
 
     // Repository for getting topics
     private final TopicRepository topicRepository;
 
     @Autowired
-    public TopicController(SessionRepository sessionRepository, TopicRepository topicRepository) {
-        this.sessionRepository = sessionRepository;
+    public TopicController(SessionService sessionService, TopicRepository topicRepository) {
+        this.sessionService = sessionService;
         this.topicRepository = topicRepository;
     }
 
@@ -32,7 +32,7 @@ public class TopicController {
     public Mono<ListTopicsResponse> listSubTopics(@RequestBody ListTopicsForm topicsForm) {
 
         // Check if session is valid
-        return sessionRepository.findById(topicsForm.token()).flatMap(session -> {
+        return sessionService.checkAndRefreshSession(topicsForm.token()).flatMap(session -> {
 
             if(session == null) {
                 return Mono.error(new RuntimeException("session.expired"));
@@ -65,7 +65,7 @@ public class TopicController {
     public Mono<GetTopicResponse> get(@RequestBody ListTopicsForm form) {
 
         // Check if session is valid
-        return sessionRepository.findById(form.token()).flatMap(session -> {
+        return sessionService.checkAndRefreshSession(form.token()).flatMap(session -> {
 
             if(session == null) {
                 return Mono.error(new RuntimeException("session.expired"));

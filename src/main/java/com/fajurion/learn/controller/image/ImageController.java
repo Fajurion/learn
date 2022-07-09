@@ -3,6 +3,7 @@ package com.fajurion.learn.controller.image;
 import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.ranks.RankRepository;
 import com.fajurion.learn.repository.account.session.SessionRepository;
+import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.image.Image;
 import com.fajurion.learn.repository.image.ImageRepository;
 import com.fajurion.learn.repository.image.ImageService;
@@ -29,8 +30,8 @@ public class ImageController {
     // Repository for getting account data
     private final AccountRepository accountRepository;
 
-    // Repository for checking sessions
-    private final SessionRepository sessionRepository;
+    // Service for checking sessions
+    private final SessionService sessionService;
 
     // Repository for uploading/downloading images
     private final ImageRepository imageRepository;
@@ -39,10 +40,10 @@ public class ImageController {
     private final ImageService service;
 
     @Autowired
-    public ImageController(RankRepository rankRepository, AccountRepository accountRepository, SessionRepository sessionRepository, ImageRepository imageRepository, ImageService service) {
+    public ImageController(RankRepository rankRepository, AccountRepository accountRepository, SessionService sessionService, ImageRepository imageRepository, ImageService service) {
         this.rankRepository = rankRepository;
         this.accountRepository = accountRepository;
-        this.sessionRepository = sessionRepository;
+        this.sessionService = sessionService;
         this.imageRepository = imageRepository;
         this.service = service;
     }
@@ -68,7 +69,7 @@ public class ImageController {
 
         AtomicReference<Integer> userID = new AtomicReference<>();
 
-        return sessionRepository.findById(token).flatMap(session -> {
+        return sessionService.checkAndRefreshSession(token).flatMap(session -> {
 
             if(session == null) {
                 return Mono.error(new RuntimeException("session.expired"));
@@ -123,7 +124,7 @@ public class ImageController {
     public Mono<Resource> download(@PathVariable int id, @RequestHeader("token") String token) {
 
         // Check if session is valid
-        return sessionRepository.findById(token).flatMap(session -> {
+        return sessionService.checkAndRefreshSession(token).flatMap(session -> {
 
             if(session == null) {
                 return Mono.error(new RuntimeException("session.expired"));

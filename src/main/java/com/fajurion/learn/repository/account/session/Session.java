@@ -21,8 +21,7 @@ public class Session {
     @Column
     final int id;
 
-    @Column
-    @NonNull
-    private String data;
+    @Column @NonNull
+    private long creation;
 
 }

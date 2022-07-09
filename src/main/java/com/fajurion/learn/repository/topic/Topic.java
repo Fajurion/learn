@@ -24,6 +24,6 @@ public class Topic {
 
     @Column
     @NonNull
-    private boolean locked, isParent;
+    private boolean locked, category;
 
 }

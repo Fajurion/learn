@@ -2,7 +2,7 @@ package com.fajurion.learn.controller.topic;
 
 import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.ranks.RankRepository;
-import com.fajurion.learn.repository.account.session.SessionRepository;
+import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.topic.Topic;
 import com.fajurion.learn.repository.topic.TopicRepository;
 import com.fajurion.learn.util.ConstantConfiguration;
@@ -16,8 +16,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @RequestMapping("/api/topic")
 public class TopicCreationController {
 
-    // Repository for checking sessions
-    private final SessionRepository sessionRepository;
+    // Service for checking sessions
+    private final SessionService sessionService;
 
     // Repository for saving topics
     private final TopicRepository topicRepository;
@@ -29,8 +29,8 @@ public class TopicCreationController {
     private final RankRepository rankRepository;
 
     @Autowired
-    public TopicCreationController(SessionRepository sessionRepository, TopicRepository topicRepository, AccountRepository accountRepository, RankRepository rankRepository) {
-        this.sessionRepository = sessionRepository;
+    public TopicCreationController(SessionService sessionService, TopicRepository topicRepository, AccountRepository accountRepository, RankRepository rankRepository) {
+        this.sessionService = sessionService;
         this.topicRepository = topicRepository;
         this.accountRepository = accountRepository;
         this.rankRepository = rankRepository;
@@ -49,7 +49,7 @@ public class TopicCreationController {
         AtomicReference<Integer> creatorID = new AtomicReference<>();
 
         // Check if session is valid
-        return sessionRepository.findById(topicForm.token()).flatMap(session -> {
+        return sessionService.checkAndRefreshSession(topicForm.token()).flatMap(session -> {
 
             if(session == null) {
                 return Mono.error(new RuntimeException("session.expired"));
@@ -85,7 +85,7 @@ public class TopicCreationController {
             }
 
             // Make parent aware
-            topic.setParent(true);
+            topic.setCategory(true);
 
             // Save topic
             return topicRepository.save(topic);

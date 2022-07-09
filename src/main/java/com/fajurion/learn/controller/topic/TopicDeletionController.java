@@ -3,6 +3,7 @@ package com.fajurion.learn.controller.topic;
 import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.ranks.RankRepository;
 import com.fajurion.learn.repository.account.session.SessionRepository;
+import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.post.PostRepository;
 import com.fajurion.learn.repository.post.comments.CommentRepository;
 import com.fajurion.learn.repository.topic.TopicRepository;
@@ -15,8 +16,8 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/api/topic")
 public class TopicDeletionController {
 
-    // Repository for checking sessions
-    private final SessionRepository sessionRepository;
+    // Service for checking sessions
+    private final SessionService sessionService;
 
     // Repository for saving topics
     private final TopicRepository topicRepository;
@@ -34,13 +35,13 @@ public class TopicDeletionController {
     private final PostRepository postRepository;
 
     @Autowired
-    public TopicDeletionController(SessionRepository sessionRepository,
+    public TopicDeletionController(SessionService sessionService,
                                    TopicRepository topicRepository,
                                    AccountRepository accountRepository,
                                    RankRepository rankRepository,
                                    CommentRepository commentRepository,
                                    PostRepository postRepository) {
-        this.sessionRepository = sessionRepository;
+        this.sessionService = sessionService;
         this.topicRepository = topicRepository;
         this.accountRepository = accountRepository;
         this.rankRepository = rankRepository;
@@ -53,7 +54,7 @@ public class TopicDeletionController {
     public Mono<DeleteTopicResponse> deleteTopic(@RequestBody DeleteTopicForm topicForm) {
 
         // Check if session is valid
-        return sessionRepository.findById(topicForm.token()).flatMap(session -> {
+        return sessionService.checkAndRefreshSession(topicForm.token()).flatMap(session -> {
 
             if(session == null) {
                 return Mono.error(new RuntimeException("session.expired"));
@@ -85,7 +86,7 @@ public class TopicDeletionController {
             }
 
             // Check if the topic is a parent topic
-            if(topic.isParent()) {
+            if(topic.isCategory()) {
                 return Mono.error(new RuntimeException("is_parent"));
             }
 

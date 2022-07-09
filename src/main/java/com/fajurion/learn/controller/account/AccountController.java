@@ -3,8 +3,7 @@ package com.fajurion.learn.controller.account;
 import com.fajurion.learn.repository.account.Account;
 import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.invite.InviteRepository;
-import com.fajurion.learn.repository.account.session.Session;
-import com.fajurion.learn.repository.account.session.SessionRepository;
+import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.util.PasswordUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -19,16 +18,16 @@ public class AccountController {
     // Repository for getting account data
     private final AccountRepository accountRepository;
 
-    // Repository for checking sessions
-    private final SessionRepository sessionRepository;
+    // Service for checking/creating sessions
+    private final SessionService sessionService;
 
     // Repository for checking invites
     private final InviteRepository inviteRepository;
 
     @Autowired
-    public AccountController(AccountRepository accountRepository, SessionRepository sessionRepository, InviteRepository inviteRepository) {
+    public AccountController(AccountRepository accountRepository, SessionService sessionService, InviteRepository inviteRepository) {
         this.accountRepository = accountRepository;
-        this.sessionRepository = sessionRepository;
+        this.sessionService = sessionService;
         this.inviteRepository = inviteRepository;
     }
 
@@ -60,7 +59,7 @@ public class AccountController {
             }
 
             // Create a new session
-            return sessionRepository.save(new Session(UUID.randomUUID().toString(), account.getId(), ""));
+            return sessionService.generateSession(account.getId());
         }).flatMap(session -> Mono.just(new LoginResponse(true, false, session.getToken())))
 
                 // Error handling
@@ -116,7 +115,7 @@ public class AccountController {
         }).flatMap(account -> {
 
             // Create new session
-            return sessionRepository.save(new Session(UUID.randomUUID().toString(), account.getId(), ""));
+            return sessionService.generateSession(account.getId());
         }).map(session -> {
 
             // Return login response with token
