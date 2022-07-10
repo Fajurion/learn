@@ -1,6 +1,5 @@
 package com.fajurion.learn.controller.post;
 
-import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.post.Post;
 import com.fajurion.learn.repository.post.PostRepository;
