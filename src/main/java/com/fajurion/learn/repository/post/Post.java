@@ -1,6 +1,7 @@
 package com.fajurion.learn.repository.post;
 
 import lombok.Data;
+import lombok.NonNull;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -12,13 +13,13 @@ public class Post {
     @Id
     private int id;
 
-    @Column
-    final int topic, creator, likes;
+    @Column @NonNull
+    int topic, creator, likes;
 
     @Column
     final long date;
 
-    @Column
-    final String content;
+    @Column @NonNull
+    String title, content;
 
 }

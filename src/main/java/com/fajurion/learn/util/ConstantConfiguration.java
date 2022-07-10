@@ -7,6 +7,8 @@ public class ConstantConfiguration {
     public static final int PERMISSION_LEVEL_CREATE_TOPIC = 5;
     public static final int PERMISSION_LEVEL_CREATE_INVITE = 60;
     public static final int PERMISSION_LEVEL_DELETE_TOPIC = 70;
+    public static final int PERMISSION_LEVEL_CREATE_POST_LOCKED = 30;
+    public static final int PERMISSION_LEVEL_DELETE_POST = 40;
 
     // Max file size
     public static final int MAX_FILE_SIZE = 1000 /* 1 KB */  * 1024; // in bytes (currently 1 MB)
@@ -16,5 +18,9 @@ public class ConstantConfiguration {
 
     // Maximum concurrent sessions
     public static final int MAXIMUM_CONCURRENT_SESSIONS = 10;
+
+    // Maximum characters for posts
+    public static final int MAXIMUM_CHARACTERS_POST = 6000;
+    public static final int MAXIMUM_CHARACTERS_POST_TITLE = 50;
 
 }

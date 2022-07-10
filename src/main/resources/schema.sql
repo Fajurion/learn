@@ -1,4 +1,4 @@
-drop table if exists sessions;
+drop table if exists sessions, posts;
 /* Create tables for account management */
 create table if not exists accounts (id SERIAL NOT NULL, username VARCHAR(32), rank VARCHAR(32), email VARCHAR(32), password VARCHAR, invitor INT, data TEXT, PRIMARY KEY (id));
 create table if not exists sessions (token VARCHAR(100), id INT, creation BIGINT, PRIMARY KEY (token));
@@ -10,6 +10,6 @@ create table if not exists topics (id SERIAL NOT NULL, parent INT, name VARCHAR(
 
 /* Create tables for Image Storage, Comments and Post Storage */
 create table if not exists images (id SERIAL NOT NULL, creator INT, image bytea, PRIMARY KEY (id));
-create table if not exists posts (id SERIAL NOT NULL, topic INT, creator INT, likes INT, date BIGINT, content TEXT, PRIMARY KEY (id));
+create table if not exists posts (id SERIAL NOT NULL, topic INT, creator INT, likes INT, date BIGINT, title VARCHAR(50), content TEXT, PRIMARY KEY (id));
 create table if not exists likes (account INT, post INT, PRIMARY KEY (account));
 create table if not exists comments (id SERIAL NOT NULL, topic INT, post INT, creator INT, content TEXT, PRIMARY KEY (id));

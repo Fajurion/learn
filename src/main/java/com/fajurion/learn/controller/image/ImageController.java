@@ -113,7 +113,10 @@ public class ImageController {
                     }
 
                     return Mono.just(new ImageUploadResponse(true, false, image.getId() + ""));
-                }).onErrorResume(RuntimeException.class, e -> Mono.just(new ImageUploadResponse(false, false, e.getMessage())))
+                })
+
+                // Error handling
+                .onErrorResume(RuntimeException.class, e -> Mono.just(new ImageUploadResponse(false, false, e.getMessage())))
                 .onErrorResume(e -> Mono.just(new ImageUploadResponse(false, true, "server.error")));
     }
 
