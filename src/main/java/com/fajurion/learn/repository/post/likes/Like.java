@@ -1,6 +1,7 @@
 package com.fajurion.learn.repository.post.likes;
 
 import lombok.Data;
+import lombok.NonNull;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -10,9 +11,11 @@ import org.springframework.data.relational.core.mapping.Table;
 public class Like {
 
     @Id
-    private int account;
+    @NonNull
+    int account;
 
     @Column
-    final int post;
+    @NonNull
+    int post;
 
 }
