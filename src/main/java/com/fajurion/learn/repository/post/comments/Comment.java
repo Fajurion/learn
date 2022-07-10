@@ -21,4 +21,7 @@ public class Comment {
     @Column
     final int post, topic;
 
+    @Column
+    final long date;
+
 }

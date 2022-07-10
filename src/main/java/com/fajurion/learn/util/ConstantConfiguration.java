@@ -23,4 +23,7 @@ public class ConstantConfiguration {
     public static final int MAXIMUM_CHARACTERS_POST = 6000;
     public static final int MAXIMUM_CHARACTERS_POST_TITLE = 50;
 
+    // Maximum characters for comments
+    public static final int MAXIMUM_CHARACTERS_COMMENT = 500; // It's recommended to also change it in the schema.sql (change "content VARCHAR(512)" to "content VARCHAR(length)"
+
 }
