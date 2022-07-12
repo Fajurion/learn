@@ -15,11 +15,13 @@ import org.springframework.data.relational.core.mapping.Table;
 public class Session {
 
     @Id
-    @NonNull
-    private String token;
+    private int id;
 
     @Column
-    final int id;
+    final String token;
+
+    @Column
+    final int account;
 
     @Column @NonNull
     private long creation;

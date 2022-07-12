@@ -69,7 +69,7 @@ public class PostCreationController {
             }
 
             // Get account to get rank data
-            return accountRepository.findById(session.getId());
+            return accountRepository.findById(session.getAccount());
         }).flatMap(account -> {
 
             if(account == null) {

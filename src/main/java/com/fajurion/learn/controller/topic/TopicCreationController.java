@@ -56,7 +56,7 @@ public class TopicCreationController {
             }
 
             // Check if the account has the required permissions
-            return accountRepository.findById(session.getId());
+            return accountRepository.findById(session.getAccount());
         }).flatMap(account -> {
 
             if(account == null) {

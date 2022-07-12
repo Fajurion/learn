@@ -61,7 +61,7 @@ public class TopicDeletionController {
             }
 
             // Get account to check rank details
-            return accountRepository.findById(session.getId());
+            return accountRepository.findById(session.getAccount());
         }).flatMap(account -> {
 
             if(account == null) {

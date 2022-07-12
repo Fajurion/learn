@@ -52,7 +52,7 @@ public class InviteController {
             }
 
             // Get account from session
-            return accountRepository.findById(session.getId());
+            return accountRepository.findById(session.getAccount());
         }).flatMap(account -> {
 
             if(account == null) {

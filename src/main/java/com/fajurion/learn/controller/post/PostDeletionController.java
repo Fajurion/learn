@@ -55,7 +55,7 @@ public class PostDeletionController {
             }
 
             // Get account data to access rank
-            return accountRepository.findById(session.getId());
+            return accountRepository.findById(session.getAccount());
         }).flatMap(account -> {
 
             if(account == null) {

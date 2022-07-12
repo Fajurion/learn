@@ -4,6 +4,7 @@ import com.fajurion.learn.repository.account.Account;
 import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.invite.InviteRepository;
 import com.fajurion.learn.repository.account.session.SessionService;
+import com.fajurion.learn.util.CustomException;
 import com.fajurion.learn.util.PasswordUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -38,15 +39,20 @@ public class AccountController {
      * @return Login response
      */
     @PostMapping("/login")
-    @ResponseBody @CrossOrigin
+    @CrossOrigin
     public Mono<LoginResponse> login(@RequestBody LoginForm loginForm) {
+
+        // Check if body is valid
+        if(loginForm.username() == null || loginForm.password() == null) {
+            return Mono.just(new LoginResponse(false, false, "login.invalid"));
+        }
 
         // Check if user exists
         return accountRepository.getAccountsByUsername(loginForm.username()).hasElements().flatMap(success -> {
 
             // false: Invalid username
             if(!success) {
-                return Mono.error(new RuntimeException("login.invalid"));
+                return Mono.error(new CustomException("login.invalid"));
             }
 
             // Get account to verify password
@@ -55,16 +61,17 @@ public class AccountController {
 
             // Check password hash
             if(!PasswordUtil.getHash(loginForm.username(), loginForm.password()).equals(account.getPassword())) {
-                return Mono.error(new RuntimeException("login.invalid"));
+                return Mono.error(new CustomException("login.invalid"));
             }
 
             // Create a new session
             return sessionService.generateSession(account.getId());
-        }).flatMap(session -> Mono.just(new LoginResponse(true, false, session.getToken())))
+        }).flatMap(session ->  Mono.just(new LoginResponse(true, false, session.getToken())))
 
                 // Error handling
-                .onErrorResume(RuntimeException.class, error -> Mono.just(new LoginResponse(false, false, error.getMessage())))
-                .onErrorResume(error -> Mono.just(new LoginResponse(false, true, error.getMessage())));
+                .onErrorResume(CustomException.class, error -> Mono.just(new LoginResponse(false, false, error.getMessage())))
+                .onErrorResume(error -> Mono.just(new LoginResponse(false, true, error.getMessage())))
+                .onErrorReturn(new LoginResponse(false, true, "server.error"));
     }
 
     // Record for login form

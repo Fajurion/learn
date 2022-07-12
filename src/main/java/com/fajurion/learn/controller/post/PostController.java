@@ -102,7 +102,7 @@ public class PostController {
             }
 
             // Set user id
-            userID.set(session.getId());
+            userID.set(session.getAccount());
 
             // Check if the post exists
             return postRepository.findById(form.post());

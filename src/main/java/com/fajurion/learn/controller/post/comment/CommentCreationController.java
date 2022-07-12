@@ -53,7 +53,7 @@ public class CommentCreationController {
             }
 
             // Save user ID
-            userID.set(session.getId());
+            userID.set(session.getAccount());
 
             // Check if post exists
             return postRepository.findById(form.post());
