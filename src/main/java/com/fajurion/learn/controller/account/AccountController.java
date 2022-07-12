@@ -37,7 +37,7 @@ public class AccountController {
      * @param loginForm Login form from the client
      * @return Login response
      */
-    @RequestMapping("/login")
+    @PostMapping("/login")
     @ResponseBody @CrossOrigin
     public Mono<LoginResponse> login(@RequestBody LoginForm loginForm) {
 

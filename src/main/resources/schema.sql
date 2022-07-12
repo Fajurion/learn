@@ -1,4 +1,4 @@
-drop table if exists sessions, posts, comments;
+drop table if exists sessions;
 /* Create tables for account management */
 create table if not exists accounts (id SERIAL NOT NULL, username VARCHAR(32), rank VARCHAR(32), email VARCHAR(32), password VARCHAR(512), invitor INT, data TEXT, PRIMARY KEY (id));
 create table if not exists sessions (token VARCHAR(100), id INT, creation BIGINT, PRIMARY KEY (token));

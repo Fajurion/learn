@@ -4,6 +4,7 @@ import com.fajurion.learn.repository.account.Account;
 import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.ranks.Rank;
 import com.fajurion.learn.repository.account.ranks.RankRepository;
+import com.fajurion.learn.util.PasswordUtil;
 import io.r2dbc.spi.ConnectionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -19,6 +20,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.UUID;
 
 @SpringBootApplication
 public class LearnApplication {
@@ -80,7 +82,7 @@ public class LearnApplication {
 		System.out.println("[Learn] Ranks created.");
 
 		// Create default admin account if not exists
-		createDefaultAccount("Administrator", "Admin");
+		createDefaultAccount("Administrator", "Admin", UUID.randomUUID().toString());
 	}
 
 	/**
@@ -89,7 +91,7 @@ public class LearnApplication {
 	 * @param name Name of the user
 	 * @param rank Name of the rank
 	 */
-	private void createDefaultAccount(String name, String rank) {
+	private void createDefaultAccount(String name, String rank, String password) {
 		accountRepository.getAccountsByUsername(name).hasElements().flatMap(exists -> {
 
 			// Check if account exists
@@ -97,9 +99,14 @@ public class LearnApplication {
 				return Mono.error(new RuntimeException(name + " already exists."));
 			}
 
-			return accountRepository.save(new Account(name, "", rank, "", ""));
+			return accountRepository.save(new Account(name, "", rank, PasswordUtil.getHash(name, password), ""));
 		}).map(account -> {
 			System.out.println(account.getUsername() + " account created.");
+
+			System.out.println(" ");
+			System.out.println("ADMIN PASSWORD: " + password);
+			System.out.println("IMPORTANT: PLEASE SAVE!");
+			System.out.println(" ");
 
 			return account;
 		}).onErrorResume(e -> {
