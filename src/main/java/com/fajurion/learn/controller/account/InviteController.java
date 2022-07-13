@@ -72,7 +72,7 @@ public class InviteController {
             }
 
             // Create invite
-            Invite invite = new Invite(UUID.randomUUID().toString(), "", userID.get());
+            Invite invite = new Invite(UUID.randomUUID().toString(), userID.get(), "");
 
             // Save invite in repository
             return inviteRepository.save(invite);

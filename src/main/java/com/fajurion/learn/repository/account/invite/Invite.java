@@ -8,16 +8,18 @@ import org.springframework.data.relational.core.mapping.Table;
 
 @Table("invites")
 @Data
-@RequiredArgsConstructor
 public class Invite {
 
     @Id
+    private int id;
+
+    @Column
     final String code;
 
     @Column
-    final String data;
+    final int creator;
 
     @Column
-    final int creator;
+    final String data;
 
 }

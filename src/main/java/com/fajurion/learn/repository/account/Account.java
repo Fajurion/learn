@@ -22,6 +22,6 @@ public class Account {
     private String username, email, rank, password, data;
 
     @Column
-    private int invitor;
+    final int invitor;
 
 }

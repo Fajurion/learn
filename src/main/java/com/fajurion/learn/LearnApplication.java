@@ -2,9 +2,11 @@ package com.fajurion.learn;
 
 import com.fajurion.learn.repository.account.Account;
 import com.fajurion.learn.repository.account.AccountRepository;
+import com.fajurion.learn.repository.account.invite.Invite;
+import com.fajurion.learn.repository.account.invite.InviteRepository;
 import com.fajurion.learn.repository.account.ranks.Rank;
 import com.fajurion.learn.repository.account.ranks.RankRepository;
-import com.fajurion.learn.util.PasswordUtil;
+import com.fajurion.learn.util.AccountUtil;
 import io.r2dbc.spi.ConnectionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -18,8 +20,6 @@ import org.springframework.r2dbc.connection.init.ConnectionFactoryInitializer;
 import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
-import java.util.Arrays;
 import java.util.UUID;
 
 @SpringBootApplication
@@ -67,6 +67,9 @@ public class LearnApplication {
 		this.accountRepository = accountRepository;
 	}
 
+	@Autowired
+	private InviteRepository inviteRepository;
+
 	/**
 	 * Create ranks on application startup
 	 *
@@ -83,6 +86,11 @@ public class LearnApplication {
 
 		// Create default admin account if not exists
 		createDefaultAccount("Administrator", "Admin", UUID.randomUUID().toString());
+
+		inviteRepository.save(new Invite(UUID.randomUUID().toString(), 0, "")).flatMap(invite -> {
+			System.out.println(invite.getCode());
+			return Mono.empty();
+		}).subscribe();
 	}
 
 	/**
@@ -99,7 +107,7 @@ public class LearnApplication {
 				return Mono.error(new RuntimeException(name + " already exists."));
 			}
 
-			return accountRepository.save(new Account(name, "", rank, PasswordUtil.getHash(name, password), ""));
+			return accountRepository.save(new Account(name, "", rank, AccountUtil.getHash(name, password), "", 0));
 		}).map(account -> {
 			System.out.println(account.getUsername() + " account created.");
 
