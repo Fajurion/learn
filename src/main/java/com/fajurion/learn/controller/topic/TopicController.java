@@ -3,6 +3,7 @@ package com.fajurion.learn.controller.topic;
 import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.topic.Topic;
 import com.fajurion.learn.repository.topic.TopicRepository;
+import com.fajurion.learn.util.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.event.EventListener;
@@ -27,30 +28,33 @@ public class TopicController {
         this.topicRepository = topicRepository;
     }
 
-    @RequestMapping("/list")
-    @ResponseBody @CrossOrigin
+    @PostMapping("/list")
+    @CrossOrigin
     public Mono<ListTopicsResponse> listSubTopics(@RequestBody ListTopicsForm topicsForm) {
 
         // Check if session is valid
         return sessionService.checkAndRefreshSession(topicsForm.token()).flatMap(session -> {
 
             if(session == null) {
-                return Mono.error(new RuntimeException("session.expired"));
+                return Mono.error(new CustomException("session.expired"));
             }
 
             // Get all topics from the form
-            return topicRepository.getTopicsByParent(topicsForm.topic());
+            return topicRepository.getTopicsByParent(topicsForm.topic()).collectList();
         }).flatMap(topics -> {
 
             if(topics == null) {
-                return Mono.error(new RuntimeException("not_found"));
+                return Mono.error(new CustomException("not_found"));
             }
 
-            return Mono.just(new ListTopicsResponse(true, false, "success", topics));
+            return Mono.just(new ListTopicsResponse(true, false, "success", (ArrayList<Topic>) topics));
         })
                 // Error handling
-                .onErrorResume(RuntimeException.class, error -> Mono.just(new ListTopicsResponse(false, false, error.getMessage(), new ArrayList<>())))
-                .onErrorResume(error -> Mono.just(new ListTopicsResponse(false, true, "server.error", new ArrayList<>())));
+                .onErrorResume(CustomException.class, error -> Mono.just(new ListTopicsResponse(false, false, error.getMessage(), new ArrayList<>())))
+                .onErrorResume(error -> {
+                    System.out.println(error.getMessage());
+                    return Mono.just(new ListTopicsResponse(false, true, "server.error", new ArrayList<>()));
+                });
     }
 
     // Record for listing sub topic form
@@ -89,21 +93,5 @@ public class TopicController {
 
     // Record for topic get response
     public record GetTopicResponse(boolean success, boolean error, String message, Topic topic) {}
-
-    @EventListener
-    public void onStartup(ApplicationStartedEvent event) {
-
-        // Check if topic exists
-        topicRepository.findById(1).flatMap(topic -> {
-
-            if(topic == null) {
-                return Mono.error(new RuntimeException("topic.exists"));
-            }
-
-            return topicRepository.save(new Topic(-1, "Learn", 0, true, false));
-        }).doOnNext(topic -> {
-            System.out.println(topic.getName() + " created.");
-        }).block();
-    }
 
 }

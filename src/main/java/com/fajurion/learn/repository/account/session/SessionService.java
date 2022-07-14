@@ -40,24 +40,29 @@ public class SessionService {
     public Mono<Session> checkAndRefreshSession(String token) {
 
         // Check if session exists
-        return sessionRepository.getSessionByToken(token).flatMap(session -> {
+        return sessionRepository.getSessionsByToken(token).collectList().flatMap(sessions -> {
 
-            if(session == null) {
-                return Mono.error(new RuntimeException("session.expired"));
+            // Check if there are two sessions with the same token (really unlikely)
+            if(sessions.size() > 1) {
+                return Mono.error(new CustomException("session.expired"));
+            }
+
+            if(sessions.isEmpty()) {
+                return Mono.error(new CustomException("session.expired"));
             }
 
             // Check if session is timed out
-            if(session.getCreation() + ConstantConfiguration.SESSION_TIMEOUT_DELAY < System.currentTimeMillis()) {
+            if(sessions.get(0).getCreation() + ConstantConfiguration.SESSION_TIMEOUT_DELAY < System.currentTimeMillis()) {
 
                 // Delete session
-                return sessionRepository.delete(session);
+                return sessionRepository.delete(sessions.get(0)).thenReturn("test");
             }
 
             // Refresh session
-            session.setCreation(System.currentTimeMillis());
+            sessions.get(0).setCreation(System.currentTimeMillis());
 
             // Save session
-            return sessionRepository.save(session);
+            return sessionRepository.save(sessions.get(0));
         }).flatMap(obj -> {
 
             // Check if session has been saved

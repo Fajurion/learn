@@ -6,7 +6,10 @@ import com.fajurion.learn.repository.account.invite.Invite;
 import com.fajurion.learn.repository.account.invite.InviteRepository;
 import com.fajurion.learn.repository.account.ranks.Rank;
 import com.fajurion.learn.repository.account.ranks.RankRepository;
+import com.fajurion.learn.repository.topic.Topic;
+import com.fajurion.learn.repository.topic.TopicRepository;
 import com.fajurion.learn.util.AccountUtil;
+import com.fajurion.learn.util.CustomException;
 import io.r2dbc.spi.ConnectionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -67,9 +70,6 @@ public class LearnApplication {
 		this.accountRepository = accountRepository;
 	}
 
-	@Autowired
-	private InviteRepository inviteRepository;
-
 	/**
 	 * Create ranks on application startup
 	 *
@@ -87,10 +87,6 @@ public class LearnApplication {
 		// Create default admin account if not exists
 		createDefaultAccount("Administrator", "Admin", UUID.randomUUID().toString());
 
-		inviteRepository.save(new Invite(UUID.randomUUID().toString(), 0, "")).flatMap(invite -> {
-			System.out.println(invite.getCode());
-			return Mono.empty();
-		}).subscribe();
 	}
 
 	/**

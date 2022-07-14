@@ -45,6 +45,11 @@ public class TopicCreationController {
             return Mono.just(new CreateTopicResponse(false, false, "name_too_long"));
         }
 
+        // Check if name is valid
+        if(topicForm.name().length() < 3) {
+            return Mono.just(new CreateTopicResponse(false, false, "name_too_short"));
+        }
+
         // Atomic reference for creator id
         AtomicReference<Integer> creatorID = new AtomicReference<>();
 
@@ -76,19 +81,28 @@ public class TopicCreationController {
             }
 
             // Get the parent topic
-            return topicRepository.findById(topicForm.parent());
+            return topicForm.parent() == 0 ? Mono.just(new Topic(-1, "", 0, false, false)) : topicRepository.findById(topicForm.parent());
         }).flatMap(topic -> {
 
             // Check if parent topic exists
-            if(topic == null) {
+            if(topic == null && !(topicForm.parent() == 0)) {
                 return Mono.error(new RuntimeException("no_parent"));
             }
 
             // Make parent aware
-            topic.setCategory(true);
+            if(topic != null) topic.setCategory(true);
 
             // Save topic
-            return topicRepository.save(topic);
+            return Mono.zip(Mono.just(topic == null ? new Topic(-1, "", 0, false, false) : topic), topicRepository.countTopicsByParent(topicForm.parent()));
+        }).flatMap(tuple -> {
+
+            // Check if there are too many topics
+            if(tuple.getT2() >= 100) {
+                return Mono.error(new RuntimeException("too_many_topics"));
+            }
+
+            // Save topic
+            return tuple.getT1().getParent() == -1 ? Mono.just(tuple.getT1()) : topicRepository.save(tuple.getT1());
         }).flatMap(topic -> {
 
             // Check if it worked
@@ -96,19 +110,11 @@ public class TopicCreationController {
                 return Mono.error(new RuntimeException("server.error"));
             }
 
-            // Check if parent has too many topics
-            return topicRepository.countTopicsByParent(topic.getId());
-        }).flatMap(count -> {
-
-            // Check if there are too many topics
-            if(count >= 100) {
-                return Mono.error(new RuntimeException("too_many_topics"));
-            }
-
             // Create topic
             return topicRepository.save(new Topic(topicForm.parent(), topicForm.name(), creatorID.get(), false, false));
         }).flatMap(topic -> {
 
+            // Check if it worked
             if(topic == null) {
                 return Mono.error(new RuntimeException("server.error"));
             }
@@ -118,7 +124,10 @@ public class TopicCreationController {
         })
                 // Error handling
                 .onErrorResume(RuntimeException.class, error -> Mono.just(new CreateTopicResponse(false, false, error.getMessage())))
-                .onErrorResume(error -> Mono.just(new CreateTopicResponse(false, true, "server.error")));
+                .onErrorResume(error -> {
+                    System.out.println(error.getMessage());
+                    return Mono.just(new CreateTopicResponse(false, true, "server.error"));
+                });
     }
 
     // Record for creating topic form
