@@ -5,8 +5,6 @@ import com.fajurion.learn.repository.topic.Topic;
 import com.fajurion.learn.repository.topic.TopicRepository;
 import com.fajurion.learn.util.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.event.ApplicationStartedEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 

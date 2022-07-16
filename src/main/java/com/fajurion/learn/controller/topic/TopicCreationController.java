@@ -97,7 +97,7 @@ public class TopicCreationController {
         }).flatMap(tuple -> {
 
             // Check if there are too many topics
-            if(tuple.getT2() >= 100) {
+            if(tuple.getT2() >= 50) {
                 return Mono.error(new RuntimeException("too_many_topics"));
             }
 

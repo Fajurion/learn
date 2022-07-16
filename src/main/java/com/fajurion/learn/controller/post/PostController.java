@@ -3,6 +3,8 @@ package com.fajurion.learn.controller.post;
 import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.post.Post;
 import com.fajurion.learn.repository.post.PostRepository;
+import com.fajurion.learn.repository.post.PostResponse;
+import com.fajurion.learn.repository.post.PostService;
 import com.fajurion.learn.repository.post.likes.Like;
 import com.fajurion.learn.repository.post.likes.LikeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,9 @@ public class PostController {
     // Repository for accessing posts
     private final PostRepository postRepository;
 
+    // Service for getting more post data
+    private final PostService postService;
+
     // Service for checking sessions
     private final SessionService sessionService;
 
@@ -28,10 +33,12 @@ public class PostController {
     @Autowired
     public PostController(PostRepository postRepository,
                           SessionService sessionService,
-                          LikeRepository likeRepository) {
+                          LikeRepository likeRepository,
+                          PostService postService) {
         this.postRepository = postRepository;
         this.sessionService = sessionService;
         this.likeRepository = likeRepository;
+        this.postService = postService;
     }
 
     /**
@@ -40,8 +47,8 @@ public class PostController {
      * @param form Post list form
      * @return List of posts with additional information
      */
-    @RequestMapping("/list")
-    @ResponseBody @CrossOrigin
+    @PostMapping("/list")
+    @CrossOrigin
     public Mono<PostListResponse> list(@RequestBody PostListForm form) {
 
         // Check if request is valid
@@ -57,7 +64,7 @@ public class PostController {
             }
 
             // List the posts
-            return postRepository.sortPostsByLikes(form.topic(), 20, form.currentScroll());
+            return postService.getPostsByLikes(form.topic(), form.currentScroll(), session.getId());
         }).flatMap(list -> {
 
             if(list == null) {
@@ -65,7 +72,7 @@ public class PostController {
             }
 
             // Return the response
-            return Mono.just(new PostListResponse(true, false, "success", list));
+            return Mono.just(new PostListResponse(true, false, "success", (ArrayList<PostResponse>) list));
         })
                 // Error handling
                 .onErrorResume(RuntimeException.class, e -> Mono.just(new PostListResponse(false, false, e.getMessage(), new ArrayList<>())))
@@ -76,7 +83,7 @@ public class PostController {
     public record PostListForm(String token, int topic, int currentScroll) {}
 
     // Record for post list response
-    public record PostListResponse(boolean success, boolean error, String message, ArrayList<Post> posts) {}
+    public record PostListResponse(boolean success, boolean error, String message, ArrayList<PostResponse> posts) {}
 
     /**
      * Endpoint for liking posts
@@ -85,7 +92,7 @@ public class PostController {
      * @return Response to the like form
      */
     @RequestMapping("/like")
-    @ResponseBody @CrossOrigin
+    @CrossOrigin
     public Mono<PostLikeResponse> like(@RequestBody PostLikeForm form) {
 
         // Reference for user identifier

@@ -11,6 +11,9 @@ import org.springframework.data.relational.core.mapping.Table;
 public class Like {
 
     @Id
+    int id;
+
+    @Column
     @NonNull
     int account;
 

@@ -116,7 +116,7 @@ public class PostCreationController {
     }
 
     // Record for post create form
-    public record PostCreateForm(String token, int topic, int creator, String title, String content) {}
+    public record PostCreateForm(String token, int topic, String title, String content) {}
 
     // Record for post create response
     public record PostCreateResponse(boolean success, boolean error, String message) {}

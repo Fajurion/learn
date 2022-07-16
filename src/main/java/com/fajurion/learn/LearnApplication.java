@@ -6,6 +6,8 @@ import com.fajurion.learn.repository.account.invite.Invite;
 import com.fajurion.learn.repository.account.invite.InviteRepository;
 import com.fajurion.learn.repository.account.ranks.Rank;
 import com.fajurion.learn.repository.account.ranks.RankRepository;
+import com.fajurion.learn.repository.post.likes.Like;
+import com.fajurion.learn.repository.post.likes.LikeRepository;
 import com.fajurion.learn.repository.topic.Topic;
 import com.fajurion.learn.repository.topic.TopicRepository;
 import com.fajurion.learn.util.AccountUtil;
@@ -69,6 +71,9 @@ public class LearnApplication {
 		this.rankRepository = rankRepository;
 		this.accountRepository = accountRepository;
 	}
+
+	@Autowired
+	private LikeRepository likeRepository;
 
 	/**
 	 * Create ranks on application startup
