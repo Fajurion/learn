@@ -15,4 +15,7 @@ public interface GroupRepository extends ReactiveCrudRepository<Group, Integer> 
     @Query("select * from groups limit :limit offset :offset")
     Flux<Group> getGroupsBy(@Param("limit") int limit, @Param("offset") int offset);
 
+    @Query("select * from groups where name like :name limit :limit offset :offset")
+    Flux<Group> searchByName(@Param("name") String name, @Param("limit") int limit, @Param("offset") int offset);
+
 }

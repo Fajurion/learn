@@ -109,9 +109,45 @@ public class GroupOverviewController {
     }
 
     // Form for getting a group list
-    public record GroupListForm(String token, int group, int limit, int offset) {}
+    public record GroupListForm(String token, int limit, int offset) {}
 
-    // Response to group info endpoint
+    // Response to group info/search endpoint
     public record GroupListResponse(boolean success, boolean error, String message, List<String> groups) {}
+
+    @PostMapping("/search")
+    public Mono<GroupListResponse> search(@RequestBody GroupSearchForm form) {
+
+        // Check if form is valid
+        if(form.token() == null || form.offset() < 0 || form.limit() < 1 || form.limit() > 20 || form.name() == null) {
+            return Mono.just(new GroupListResponse(false, false, "empty", new ArrayList<>()));
+        }
+
+        // Check if token is valid
+        return sessionService.checkAndRefreshSession(form.token()).flatMap(session -> {
+
+            if(session == null) {
+                return Mono.error(new CustomException("session.expired"));
+            }
+
+            // Search groups
+            return groupRepository.searchByName(form.name(), form.limit(), form.offset()).collectList();
+        }).map(groups -> {
+            ArrayList<String> nameList = new ArrayList<>();
+
+            // Turn group list into name list
+            for(Group group : groups) {
+                nameList.add(group.getName());
+            }
+
+            // Return response
+            return new GroupListResponse(true, false, "success", nameList);
+        })
+                // Error handling
+                .onErrorResume(CustomException.class, e -> Mono.just(new GroupListResponse(true, false, e.getMessage(), new ArrayList<>())))
+                .onErrorReturn(new GroupListResponse(false, true, "server.error", new ArrayList<>()));
+    }
+
+    // Form for searching groups
+    public record GroupSearchForm(String token, String name, int limit, int offset) {}
 
 }
