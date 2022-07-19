@@ -5,8 +5,11 @@ import com.fajurion.learn.util.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
+import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Service
@@ -25,16 +28,27 @@ public class SessionService {
         // Generate a unique session identifier
         AtomicReference<String> token = new AtomicReference<>(generateRandomString(99));
 
-        // Check if user has too many sessions
-        return sessionRepository.getSessionsByAccount(userID).count().flatMap(count -> {
+        // Get all sessions of the user
+        return sessionRepository.getSessionsByAccount(userID).collectList().flatMap(list -> {
 
-            if (count >= ConstantConfiguration.MAXIMUM_CONCURRENT_SESSIONS) {
+            // Sessions to delete from the database
+            ArrayList<Session> toDelete = new ArrayList<>();
+
+            // Remove old sessions
+            for(Session session : list) {
+                if(session.getCreation() + TimeUnit.DAYS.toMillis(1) < System.currentTimeMillis()) {
+                    toDelete.add(session);
+                }
+            }
+
+            // Check if user has too many sessions
+            if (list.size() - toDelete.size() >= ConstantConfiguration.MAXIMUM_CONCURRENT_SESSIONS) {
                 return Mono.error(new CustomException("too_many_sessions"));
             }
 
             // Check if session token is already used
-            return sessionRepository.save(new Session(token.get(), userID, System.currentTimeMillis()));
-        });
+            return Mono.zip(sessionRepository.save(new Session(token.get(), userID, System.currentTimeMillis())), sessionRepository.deleteAll(toDelete).thenReturn(new Session("d", -1, -1)));
+        }).map(Tuple2::getT1);
     }
 
     public Mono<Session> checkAndRefreshSession(String token) {
