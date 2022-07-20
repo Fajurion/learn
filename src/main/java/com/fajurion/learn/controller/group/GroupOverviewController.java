@@ -3,8 +3,11 @@ package com.fajurion.learn.controller.group;
 import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.groups.Group;
 import com.fajurion.learn.repository.groups.GroupRepository;
+import com.fajurion.learn.repository.groups.GroupResponse;
+import com.fajurion.learn.repository.groups.GroupService;
 import com.fajurion.learn.repository.groups.member.MemberRepository;
 import com.fajurion.learn.util.CustomException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -24,10 +27,15 @@ public class GroupOverviewController {
     // Repository for accessing member data
     private final MemberRepository memberRepository;
 
-    public GroupOverviewController(SessionService sessionService, GroupRepository groupRepository, MemberRepository memberRepository) {
+    // Service for getting better group data
+    private final GroupService groupService;
+
+    @Autowired
+    public GroupOverviewController(SessionService sessionService, GroupRepository groupRepository, MemberRepository memberRepository, GroupService groupService) {
         this.sessionService = sessionService;
         this.groupRepository = groupRepository;
         this.memberRepository = memberRepository;
+        this.groupService = groupService;
     }
 
     @PostMapping("/get")
@@ -90,18 +98,12 @@ public class GroupOverviewController {
                 return Mono.error(new CustomException("session.expired"));
             }
 
-            // Get groups
-            return groupRepository.getGroupsBy(form.limit(), form.offset()).collectList();
+            // Get group responses
+            return groupService.getResponseList(form.limit(), form.offset());
         }).map(list -> {
-            ArrayList<String> nameList = new ArrayList<>();
-
-            // Convert group list to name list
-            for(Group group : list) {
-                nameList.add(group.getName());
-            }
 
             // Return response
-            return new GroupListResponse(true, false, "success", nameList);
+            return new GroupListResponse(true, false, "success", list);
         })
                 // Error handling
                 .onErrorResume(CustomException.class, e -> Mono.just(new GroupListResponse(false, false, e.getMessage(), new ArrayList<>())))
@@ -112,8 +114,9 @@ public class GroupOverviewController {
     public record GroupListForm(String token, int limit, int offset) {}
 
     // Response to group info/search endpoint
-    public record GroupListResponse(boolean success, boolean error, String message, List<String> groups) {}
+    public record GroupListResponse(boolean success, boolean error, String message, List<GroupResponse> groups) {}
 
+    // TODO: Fix
     @PostMapping("/search")
     public Mono<GroupListResponse> search(@RequestBody GroupSearchForm form) {
 
@@ -140,7 +143,7 @@ public class GroupOverviewController {
             }
 
             // Return response
-            return new GroupListResponse(true, false, "success", nameList);
+            return new GroupListResponse(true, false, "success", new ArrayList<>());
         })
                 // Error handling
                 .onErrorResume(CustomException.class, e -> Mono.just(new GroupListResponse(true, false, e.getMessage(), new ArrayList<>())))

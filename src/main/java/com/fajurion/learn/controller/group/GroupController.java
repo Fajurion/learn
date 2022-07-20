@@ -6,6 +6,7 @@ import com.fajurion.learn.repository.groups.GroupRepository;
 import com.fajurion.learn.repository.groups.member.Member;
 import com.fajurion.learn.repository.groups.member.MemberRepository;
 import com.fajurion.learn.util.CustomException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -22,6 +23,7 @@ public class GroupController {
     // Repository for accessing member data
     private final MemberRepository memberRepository;
 
+    @Autowired
     public GroupController(SessionService sessionService, GroupRepository groupRepository, MemberRepository memberRepository) {
         this.sessionService = sessionService;
         this.groupRepository = groupRepository;
