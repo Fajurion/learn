@@ -39,4 +39,21 @@ public class GroupService {
                     return responses;
                 });
     }
+
+    public Mono<ArrayList<GroupResponse>> searchResponseList(String query, int limit, int offset) {
+
+        // Get all groups with limit and offset
+        return groupRepository.searchByName(query, limit, offset)
+                .flatMap(group -> Mono.zip(memberRepository.countByGroup(group.getId()), Mono.just(group)))
+                .collectList().map(list -> {
+                    ArrayList<GroupResponse> responses = new ArrayList<>();
+
+                    // Turn tuple2 into response
+                    for(Tuple2<Long, Group> tuple2 : list) {
+                        responses.add(new GroupResponse(tuple2.getT2(), tuple2.getT1().intValue()));
+                    }
+
+                    return responses;
+                });
+    }
 }

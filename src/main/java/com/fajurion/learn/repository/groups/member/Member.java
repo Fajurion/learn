@@ -13,8 +13,11 @@ public class Member {
     @Id
     int id;
 
+    @Column("class") @NonNull
+    int group;
+
     @Column @NonNull
-    int group, account;
+    int account;
 
     @Column @NonNull
     final long joined;

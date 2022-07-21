@@ -116,7 +116,6 @@ public class GroupOverviewController {
     // Response to group info/search endpoint
     public record GroupListResponse(boolean success, boolean error, String message, List<GroupResponse> groups) {}
 
-    // TODO: Fix
     @PostMapping("/search")
     public Mono<GroupListResponse> search(@RequestBody GroupSearchForm form) {
 
@@ -133,17 +132,11 @@ public class GroupOverviewController {
             }
 
             // Search groups
-            return groupRepository.searchByName(form.name(), form.limit(), form.offset()).collectList();
+            return groupService.searchResponseList(form.name(), form.limit(), form.offset());
         }).map(groups -> {
-            ArrayList<String> nameList = new ArrayList<>();
-
-            // Turn group list into name list
-            for(Group group : groups) {
-                nameList.add(group.getName());
-            }
 
             // Return response
-            return new GroupListResponse(true, false, "success", new ArrayList<>());
+            return new GroupListResponse(true, false, "success", groups);
         })
                 // Error handling
                 .onErrorResume(CustomException.class, e -> Mono.just(new GroupListResponse(true, false, e.getMessage(), new ArrayList<>())))

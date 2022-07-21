@@ -75,7 +75,10 @@ public class GroupController {
         })
                 // Error handling
                 .onErrorResume(CustomException.class, e -> Mono.just(new GroupCreateResponse(false, false, e.getMessage(), -1)))
-                .onErrorReturn(new GroupCreateResponse(false, true, "server.error", -1));
+                .onErrorResume(e -> {
+                    System.out.println(e.getMessage());
+                    return Mono.just(new GroupCreateResponse(false, true, "server.error", -1));
+                });
     }
 
     // Form for creating a group
