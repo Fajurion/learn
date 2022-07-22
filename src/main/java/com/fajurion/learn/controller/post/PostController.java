@@ -64,7 +64,7 @@ public class PostController {
             }
 
             // List the posts
-            return postService.getPostsByLikes(form.topic(), form.currentScroll(), session.getId());
+            return postService.getPostsByLikes(form.topic(), form.currentScroll(), session.getAccount());
         }).flatMap(list -> {
 
             if(list == null) {

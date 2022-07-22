@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @RequestMapping("/api/group")
 @RestController
@@ -44,7 +45,7 @@ public class GroupOverviewController {
 
         // Check if form is valid
         if(form.token() == null) {
-            return Mono.just(new GroupInfoResponse(false, true, "empty", "", "", 0));
+            return Mono.just(new GroupInfoResponse(false, true, "empty", "", "", 0, false, false));
         }
 
         // Check if token is valid
@@ -55,32 +56,33 @@ public class GroupOverviewController {
                     }
 
                     // Check if group exists
-                    return groupRepository.findById(form.group());
-                }).flatMap(group -> {
+                    return Mono.zip(groupRepository.findById(form.group()).onErrorReturn(new Group("", "", -1)), Mono.just(session.getAccount()));
+                }).flatMap(tuple2 -> {
 
-                    if(group == null) {
+                    if(tuple2.getT1().getCreator() == -1) {
                         return Mono.error(new CustomException("not_found"));
                     }
 
                     // Get the information about the group
-                    return Mono.zip(memberRepository.countByGroup(group.getId()), Mono.just(group));
+                    return Mono.zip(memberRepository.countByGroup(tuple2.getT1().getId()), Mono.just(tuple2.getT1()), Mono.just(tuple2.getT2()),
+                            memberRepository.getMembersByAccountAndGroup(tuple2.getT2(), tuple2.getT1().getId()).hasElements());
                 }).map(tuple -> {
 
                     // Return response
                     return new GroupInfoResponse(true, false, "success",
                             tuple.getT2().getName(), tuple.getT2().getDescription(),
-                            tuple.getT1().intValue());
+                            tuple.getT1().intValue(), tuple.getT4(), tuple.getT3() == tuple.getT2().getCreator());
                 })
                 // Error handling
-                .onErrorResume(CustomException.class, e -> Mono.just(new GroupInfoResponse(false, false, e.getMessage(), "", "", 0)))
-                .onErrorReturn(new GroupInfoResponse(false, true, "server.error", "", "", 0));
+                .onErrorResume(CustomException.class, e -> Mono.just(new GroupInfoResponse(false, false, e.getMessage(), "", "", 0, false, false)))
+                .onErrorReturn(new GroupInfoResponse(false, true, "server.error", "", "", 0, false, false));
     }
 
     // Form for getting group info
     public record GroupInfoForm(String token, int group) {}
 
     // Response to group info endpoint
-    public record GroupInfoResponse(boolean success, boolean error, String message, String name, String description, int memberCount) {}
+    public record GroupInfoResponse(boolean success, boolean error, String message, String name, String description, int memberCount, boolean member, boolean creator) {}
 
     @PostMapping("/list")
     @CrossOrigin
@@ -117,6 +119,7 @@ public class GroupOverviewController {
     public record GroupListResponse(boolean success, boolean error, String message, List<GroupResponse> groups) {}
 
     @PostMapping("/search")
+    @CrossOrigin
     public Mono<GroupListResponse> search(@RequestBody GroupSearchForm form) {
 
         // Check if form is valid

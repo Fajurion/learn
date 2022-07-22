@@ -55,7 +55,7 @@ public class GroupController {
             }
 
             // Check if group name is taken and zip with the user ID
-            return Mono.zip(groupRepository.getGroupByNameIgnoreCase(form.name()).hasElement(), Mono.just(session.getId()));
+            return Mono.zip(groupRepository.getGroupByNameIgnoreCase(form.name()).hasElement(), Mono.just(session.getAccount()));
         }).flatMap(tuple2 -> {
 
             if(tuple2.getT1()) {
@@ -108,13 +108,14 @@ public class GroupController {
             }
 
             // Get the group and zip with user id
-            return Mono.zip(groupRepository.findById(form.group()), Mono.just(session.getId()));
+            return Mono.zip(groupRepository.findById(form.group()), Mono.just(session.getAccount()));
         }).flatMap(group -> {
 
             if(group == null) {
                 return Mono.error(new CustomException("not_found"));
             }
 
+                    System.out.println(group.getT1().getCreator() + " | " + group.getT2());
             // Check if the user is the creator of the group
             if(group.getT1().getCreator() != group.getT2()) {
                 return Mono.error(new CustomException("no_permission"));
