@@ -5,7 +5,10 @@ import com.fajurion.learn.repository.groups.Group;
 import com.fajurion.learn.repository.groups.GroupRepository;
 import com.fajurion.learn.repository.groups.GroupResponse;
 import com.fajurion.learn.repository.groups.GroupService;
+import com.fajurion.learn.repository.groups.member.Member;
 import com.fajurion.learn.repository.groups.member.MemberRepository;
+import com.fajurion.learn.repository.groups.member.MemberResponse;
+import com.fajurion.learn.repository.groups.member.MemberService;
 import com.fajurion.learn.util.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -31,12 +34,20 @@ public class GroupOverviewController {
     // Service for getting better group data
     private final GroupService groupService;
 
+    // Service for getting better member data
+    private final MemberService memberService;
+
     @Autowired
-    public GroupOverviewController(SessionService sessionService, GroupRepository groupRepository, MemberRepository memberRepository, GroupService groupService) {
+    public GroupOverviewController(SessionService sessionService,
+                                   GroupRepository groupRepository,
+                                   MemberRepository memberRepository,
+                                   GroupService groupService,
+                                   MemberService memberService) {
         this.sessionService = sessionService;
         this.groupRepository = groupRepository;
         this.memberRepository = memberRepository;
         this.groupService = groupService;
+        this.memberService = memberService;
     }
 
     @PostMapping("/get")
@@ -45,7 +56,8 @@ public class GroupOverviewController {
 
         // Check if form is valid
         if(form.token() == null) {
-            return Mono.just(new GroupInfoResponse(false, true, "empty", "", "", 0, false, false));
+            return Mono.just(new GroupInfoResponse(false, true, "empty", "", "", 0,
+                    false, false, new ArrayList<>()));
         }
 
         // Check if token is valid
@@ -65,24 +77,28 @@ public class GroupOverviewController {
 
                     // Get the information about the group
                     return Mono.zip(memberRepository.countByGroup(tuple2.getT1().getId()), Mono.just(tuple2.getT1()), Mono.just(tuple2.getT2()),
-                            memberRepository.getMembersByAccountAndGroup(tuple2.getT2(), tuple2.getT1().getId()).hasElements());
+                            memberRepository.getMembersByAccountAndGroup(tuple2.getT2(), tuple2.getT1().getId()).hasElements(),
+                            memberService.getMembers(form.group(), 10).onErrorReturn(new ArrayList<>()));
                 }).map(tuple -> {
 
                     // Return response
                     return new GroupInfoResponse(true, false, "success",
                             tuple.getT2().getName(), tuple.getT2().getDescription(),
-                            tuple.getT1().intValue(), tuple.getT4(), tuple.getT3() == tuple.getT2().getCreator());
+                            tuple.getT1().intValue(), tuple.getT4(), tuple.getT3() == tuple.getT2().getCreator(), tuple.getT5());
                 })
                 // Error handling
-                .onErrorResume(CustomException.class, e -> Mono.just(new GroupInfoResponse(false, false, e.getMessage(), "", "", 0, false, false)))
-                .onErrorReturn(new GroupInfoResponse(false, true, "server.error", "", "", 0, false, false));
+                .onErrorResume(CustomException.class, e -> Mono.just(new GroupInfoResponse(false, false, e.getMessage(), "", "",
+                        0, false, false, new ArrayList<>())))
+                .onErrorReturn(new GroupInfoResponse(false, true, "server.error", "", "",
+                        0, false, false, new ArrayList<>()));
     }
 
     // Form for getting group info
     public record GroupInfoForm(String token, int group) {}
 
     // Response to group info endpoint
-    public record GroupInfoResponse(boolean success, boolean error, String message, String name, String description, int memberCount, boolean member, boolean creator) {}
+    public record GroupInfoResponse(boolean success, boolean error, String message, String name, String description,
+                                    int memberCount, boolean member, boolean creator, List<MemberResponse> members) {}
 
     @PostMapping("/list")
     @CrossOrigin

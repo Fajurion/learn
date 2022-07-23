@@ -1,6 +1,7 @@
 package com.fajurion.learn.controller.group;
 
 import com.fajurion.learn.repository.account.session.SessionService;
+import com.fajurion.learn.repository.groups.Group;
 import com.fajurion.learn.repository.groups.GroupRepository;
 import com.fajurion.learn.repository.groups.GroupService;
 import com.fajurion.learn.repository.groups.member.Member;
@@ -23,15 +24,11 @@ public class GroupMemberController {
     // Repository for accessing member data
     private final MemberRepository memberRepository;
 
-    // Service for getting better group data
-    private final GroupService groupService;
-
     @Autowired
-    public GroupMemberController(SessionService sessionService, GroupRepository groupRepository, MemberRepository memberRepository, GroupService groupService) {
+    public GroupMemberController(SessionService sessionService, GroupRepository groupRepository, MemberRepository memberRepository) {
         this.sessionService = sessionService;
         this.groupRepository = groupRepository;
         this.memberRepository = memberRepository;
-        this.groupService = groupService;
     }
 
 
@@ -51,16 +48,23 @@ public class GroupMemberController {
                 return Mono.error(new CustomException("session.expired"));
             }
 
-            // Check if the account is already in the group (and zip with account id)
-            return Mono.zip(memberRepository.getMembersByAccountAndGroup(session.getAccount(), form.group()).hasElements(), Mono.just(session.getAccount()));
+            // Check if the account is already in the group and check if group exists (and zip with account id)
+            return Mono.zip(memberRepository.getMembersByAccountAndGroup(session.getAccount(), form.group()).hasElements(),
+                    groupRepository.findById(form.group()).onErrorReturn(new Group("", "", -1)), Mono.just(session.getAccount()));
         }).flatMap(tuple -> {
 
+            // Check if group exists
+            if(tuple.getT2().getCreator() == -1) {
+                return Mono.error(new CustomException("not_found"));
+            }
+
+            // Check if player is already a member
             if(tuple.getT1()) {
                 return Mono.error(new CustomException("already_joined"));
             }
 
             // Save join status
-            return memberRepository.save(new Member(form.group(), tuple.getT2(), System.currentTimeMillis()));
+            return memberRepository.save(new Member(form.group(), tuple.getT3(), System.currentTimeMillis()));
         }).map(member -> {
 
             // Return response
@@ -87,13 +91,24 @@ public class GroupMemberController {
                         return Mono.error(new CustomException("session.expired"));
                     }
 
-                    // Check if the account is already in the group (and zip with account id)
+                    // Check if the account is not in the group and check if group exists (and zip with account id)
                     return Mono.zip(memberRepository.getMembersByAccountAndGroup(session.getAccount(), form.group()).elementAt(0)
                                     .onErrorReturn(new Member(-1, -1, -1)),
-                            Mono.just(session.getAccount()));
+                            groupRepository.findById(form.group()).onErrorReturn(new Group("", "", -1)), Mono.just(session.getAccount()));
                 }).flatMap(tuple -> {
 
-                    if(tuple.getT1().getAccount() != -1) {
+                    // Check if group exists
+                    if(tuple.getT2().getCreator() == -1) {
+                        return Mono.error(new CustomException("not_found"));
+                    }
+
+                    // Check if member is owner of the group
+                    if(tuple.getT2().getCreator() == tuple.getT3()) {
+                        return Mono.error(new CustomException("creator"));
+                    }
+
+                    // Check if member is not in the group
+                    if(tuple.getT1().getAccount() == -1) {
                         return Mono.error(new CustomException("not_joined"));
                     }
 
