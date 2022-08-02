@@ -14,7 +14,7 @@ public class PostResponse {
 
     String title, content;
 
-    private boolean liked = false;
+    private boolean liked;
 
     public PostResponse(Post post, boolean liked) {
         this.id = post.getId();
@@ -23,6 +23,7 @@ public class PostResponse {
         this.date = post.getDate();
         this.title = post.getTitle();
         this.content = post.getContent();
+        this.likes = post.getLikes();
         this.liked = liked;
     }
 

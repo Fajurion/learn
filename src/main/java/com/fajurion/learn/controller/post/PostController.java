@@ -7,6 +7,7 @@ import com.fajurion.learn.repository.post.PostResponse;
 import com.fajurion.learn.repository.post.PostService;
 import com.fajurion.learn.repository.post.likes.Like;
 import com.fajurion.learn.repository.post.likes.LikeRepository;
+import com.fajurion.learn.util.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -91,66 +92,52 @@ public class PostController {
      * @param form Post like form
      * @return Response to the like form
      */
-    @RequestMapping("/like")
+    @PostMapping("/like")
     @CrossOrigin
     public Mono<PostLikeResponse> like(@RequestBody PostLikeForm form) {
 
-        // Reference for user identifier
-        AtomicReference<Integer> userID = new AtomicReference<>();
-
-        // Reference for post to like
-        AtomicReference<Post> postToLike = new AtomicReference<>();
+        // Check if form is valid
+        if(form.token() == null) {
+            return Mono.just(new PostLikeResponse(false, false, "empty"));
+        }
 
         // Check if session is valid
         return sessionService.checkAndRefreshSession(form.token()).flatMap(session -> {
 
             if(session == null) {
-                return Mono.error(new RuntimeException("session.expired"));
+                return Mono.error(new CustomException("session.expired"));
             }
-
-            // Set user id
-            userID.set(session.getAccount());
 
             // Check if the post exists
-            return postRepository.findById(form.post());
-        }).flatMap(post -> {
+            return Mono.zip(postRepository.findById(form.post()).onErrorReturn(new Post(-1, -1, -1, -1, "", "")), Mono.just(session.getAccount()));
+        }).flatMap(tuple2 -> {
 
-            if(post == null) {
-                return Mono.error(new RuntimeException("not_found"));
+            if(tuple2.getT1().getCreator() == -1) {
+                return Mono.error(new CustomException("not_found"));
             }
-
-            // Set post to like
-            postToLike.set(post);
 
             // Check if the post has already been liked
-            return likeRepository.findById(userID.get());
-        }).flatMap(like -> {
+            return Mono.zip(likeRepository.getLikeByPostAndAccount(form.post(), tuple2.getT2()).hasElement(),
+                    Mono.just(tuple2.getT2()), Mono.just(tuple2.getT1()));
+        }).flatMap(tuple -> {
 
-            if(like != null) {
-                return Mono.error(new RuntimeException("already.liked"));
+            if(tuple.getT1()) {
+                return Mono.error(new CustomException("already.liked"));
             }
-
-            // Like the post
-            Post post = postToLike.get();
-            post.setLikes(post.getLikes() + 1);
 
             // Update post
-            postToLike.set(post);
+            tuple.getT3().setLikes(tuple.getT3().getLikes() + 1);
 
             // Update database
-            return Mono.zip(likeRepository.save(new Like(userID.get(), form.post())), postRepository.save(postToLike.get()));
-        }).flatMap(response -> {
-
-            if(response == null) {
-                return Mono.error(new RuntimeException("server.error"));
-            }
+            return Mono.zip(likeRepository.save(new Like(tuple.getT2(), form.post())), postRepository.save(tuple.getT3()));
+        }).map(response -> {
 
             // Return response
-            return Mono.just(new PostLikeResponse(true, false, "success"));
+            return new PostLikeResponse(true, false, "success");
         })
                 // Error handling
-                .onErrorResume(RuntimeException.class, e -> Mono.just(new PostLikeResponse(false, false, e.getMessage())))
-                .onErrorResume(e -> Mono.just(new PostLikeResponse(false, true, "server.error")));
+                .onErrorResume(CustomException.class, e -> Mono.just(new PostLikeResponse(false, false, e.getMessage())))
+                .onErrorReturn(new PostLikeResponse(false, true, "server.error"));
     }
 
     // Record for post like form
@@ -158,5 +145,53 @@ public class PostController {
 
     // Record for post like response
     public record PostLikeResponse(boolean success, boolean error, String message) {}
+
+    @PostMapping("/unlike")
+    @CrossOrigin
+    public Mono<PostLikeResponse> unlike(@RequestBody PostLikeForm form) {
+
+        // Check if form is valid
+        if(form.token() == null) {
+            return Mono.just(new PostLikeResponse(false, false, "empty"));
+        }
+
+        // Check if session is valid
+        return sessionService.checkAndRefreshSession(form.token()).flatMap(session -> {
+
+            if(session == null) {
+                return Mono.error(new CustomException("session.expired"));
+            }
+
+            // Check if the post exists
+            return Mono.zip(postRepository.findById(form.post()).onErrorReturn(new Post(-1, -1, -1, -1, "", "")), Mono.just(session.getAccount()));
+        }).flatMap(tuple2 -> {
+
+            if(tuple2.getT1().getCreator() == -1) {
+                return Mono.error(new CustomException("not_found"));
+            }
+
+            // Check if the post hasn't been liked
+            return Mono.zip(likeRepository.getLikeByPostAndAccount(form.post(), tuple2.getT2()).onErrorReturn(new Like(-1, -1)),
+                    Mono.just(tuple2.getT2()), Mono.just(tuple2.getT1()));
+        }).flatMap(tuple -> {
+
+            if(tuple.getT1().getAccount() == -1) {
+                return Mono.error(new CustomException("not.liked"));
+            }
+
+            // Update post
+            tuple.getT3().setLikes(tuple.getT3().getLikes() - 1);
+
+            // Update database
+            return Mono.zip(likeRepository.delete(tuple.getT1()).thenReturn(new Like(-1, -1)), postRepository.save(tuple.getT3()));
+        }).map(response -> {
+
+            // Return response
+            return new PostLikeResponse(true, false, "success");
+        })
+            // Error handling
+            .onErrorResume(CustomException.class, e -> Mono.just(new PostLikeResponse(false, false, e.getMessage())))
+            .onErrorReturn(new PostLikeResponse(false, true, "server.error"));
+    }
 
 }

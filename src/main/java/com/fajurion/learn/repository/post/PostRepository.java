@@ -16,7 +16,7 @@ public interface PostRepository extends ReactiveCrudRepository<Post, Integer> {
     Mono<Void> deleteAllByTopic(@Param("topic") int topic);
 
     // Sort with likes descending with limit and offset
-    @Query("select * from posts where topic = :topic order by likes LIMIT :limit OFFSET :offset")
+    @Query("select * from posts where topic = :topic order by likes DESC LIMIT :limit OFFSET :offset")
     Flux<Post> sortPostsByLikes(@Param("topic") int topic, @Param("limit") int limit, @Param("offset") int offset);
 
 }

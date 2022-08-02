@@ -10,4 +10,6 @@ public interface LikeRepository extends ReactiveCrudRepository<Like, Integer> {
 
     Mono<Like> getLikeByPostAndAccount(@Param("post") int post,  @Param("account") int account);
 
+    Mono<Void> deleteAllByPost(@Param("post") int post);
+
 }

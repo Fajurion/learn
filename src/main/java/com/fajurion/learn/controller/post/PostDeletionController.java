@@ -5,6 +5,7 @@ import com.fajurion.learn.repository.account.ranks.RankRepository;
 import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.post.PostRepository;
 import com.fajurion.learn.repository.post.comments.CommentRepository;
+import com.fajurion.learn.repository.post.likes.LikeRepository;
 import com.fajurion.learn.util.ConstantConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -29,17 +30,22 @@ public class PostDeletionController {
     // Repository for deleting comments
     private final CommentRepository commentRepository;
 
+    // Repository for deleting likes
+    private final LikeRepository likeRepository;
+
     @Autowired
     public PostDeletionController(PostRepository postRepository,
                                   SessionService sessionService,
                                   AccountRepository accountRepository,
                                   RankRepository rankRepository,
-                                  CommentRepository commentRepository) {
+                                  CommentRepository commentRepository,
+                                  LikeRepository likeRepository) {
         this.postRepository = postRepository;
         this.sessionService = sessionService;
         this.accountRepository = accountRepository;
         this.rankRepository = rankRepository;
         this.commentRepository = commentRepository;
+        this.likeRepository = likeRepository;
     }
 
 
@@ -80,11 +86,12 @@ public class PostDeletionController {
             }
 
             // Delete post
-            return postRepository.delete(post);
+            return postRepository.delete(post).thenReturn(post);
         }).flatMap(v -> {
 
-            // Delete comments related to post
-            return commentRepository.deleteAllByPost(form.post());
+            // Delete comments related to post and likes
+            return Mono.zip(commentRepository.deleteAllByPost(form.post()).thenReturn(v),
+                    likeRepository.deleteAllByPost(form.post()).thenReturn(v));
         }).map(v -> new DeletePostResponse(true, false, "success"))
 
                 // Error handling

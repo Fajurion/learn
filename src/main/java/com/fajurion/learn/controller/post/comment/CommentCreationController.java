@@ -33,9 +33,14 @@ public class CommentCreationController {
         this.postRepository = postRepository;
     }
 
-    @RequestMapping("/create")
-    @ResponseBody @CrossOrigin
+    @PostMapping("/create")
+    @CrossOrigin
     public Mono<CommentCreateResponse> create(@RequestBody CommentCreateForm form) {
+
+        // Check if form is valid
+        if(form.content() == null || form.token() == null) {
+            return Mono.just(new CommentCreateResponse(false, false, "empty"));
+        }
 
         // Check if content fits requirements
         if(form.content().length() > ConstantConfiguration.MAXIMUM_CHARACTERS_COMMENT) {

@@ -40,12 +40,31 @@ public class PostService {
 
             // Add the like status to all the posts
             for(Tuple2<Boolean, Post> tuple2 : list) {
+                tuple2.getT2().setContent(shortenContent(tuple2.getT2().getContent(), 10));
+
                 postList.add(new PostResponse(tuple2.getT2(), tuple2.getT1()));
             }
 
             // Return the posts
             return postList;
         });
+    }
+
+    private String shortenContent(String content, int maxLines) {
+        StringBuilder newContent = new StringBuilder();
+
+        int lines = 0;
+        for(String s : content.split("\n")) {
+            if(lines > maxLines) {
+                newContent.append("\n ...");
+                break;
+            }
+
+            newContent.append(s).append("\n");
+            lines += Math.max(1, s.length() / 100);
+        }
+
+        return newContent.toString();
     }
 
 }

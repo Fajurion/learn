@@ -9,6 +9,7 @@ public class ConstantConfiguration {
     public static final int PERMISSION_LEVEL_DELETE_TOPIC = 70;
     public static final int PERMISSION_LEVEL_CREATE_POST_LOCKED = 30;
     public static final int PERMISSION_LEVEL_DELETE_POST = 40;
+    public static final int PERMISSION_LEVEL_DELETE_COMMENT = 35;
 
     // Max file size
     public static final int MAX_FILE_SIZE = 1000 /* 1 KB */  * 1024; // in bytes (currently 1 MB)
