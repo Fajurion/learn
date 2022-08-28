@@ -1,5 +1,7 @@
 package com.fajurion.learn.controller.post;
 
+import com.fajurion.learn.repository.account.Account;
+import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.post.Post;
 import com.fajurion.learn.repository.post.PostRepository;
@@ -27,15 +29,20 @@ public class PostOverviewController {
     // Repository for accessing topics
     private final LikeRepository likeRepository;
 
+    // Repository for getting account data
+    private final AccountRepository accountRepository;
+
     @Autowired
     public PostOverviewController(PostRepository postRepository,
-                          SessionService sessionService,
-                          LikeRepository likeRepository,
-                          PostService postService) {
+                                  SessionService sessionService,
+                                  LikeRepository likeRepository,
+                                  PostService postService,
+                                  AccountRepository accountRepository) {
         this.postRepository = postRepository;
         this.sessionService = sessionService;
         this.likeRepository = likeRepository;
         this.postService = postService;
+        this.accountRepository = accountRepository;
     }
 
     @PostMapping("/info")
@@ -55,8 +62,7 @@ public class PostOverviewController {
             }
 
             // Get post and check if it exists (and zip with other needed data)
-            return Mono.zip(postRepository.findById(form.post()).onErrorReturn(new Post(-1, -1, -1, 1, "", "")),
-                    likeRepository.getLikeByPostAndAccount(form.post(), session.getAccount()).hasElement());
+            return Mono.zip(postRepository.findById(form.post()).onErrorReturn(new Post(-1, -1, -1, 1, "", "")), Mono.just(session.getAccount()));
         }).flatMap(tuple2 -> {
 
             // Check if post exists
@@ -64,8 +70,14 @@ public class PostOverviewController {
                 return Mono.error(new CustomException("not_found"));
             }
 
+            // Get creator of the post (and zip with previous values)
+            return Mono.zip(likeRepository.getLikeByPostAndAccount(form.post(), tuple2.getT2()).hasElement(), Mono.just(tuple2.getT1()),
+                    accountRepository.findById(tuple2.getT1().getCreator()).onErrorReturn(new Account("", "", "", "", "", -1)),
+                    Mono.just(tuple2.getT2()));
+        }).flatMap(tuple4 -> {
+
             // Turn into post response and return
-            return Mono.just(new PostInfoResponse(true, false, "success", new PostResponse(tuple2.getT1(), tuple2.getT2())));
+            return Mono.just(new PostInfoResponse(true, false, "success", new PostResponse(tuple4.getT2(), tuple4.getT1(), tuple4.getT4(), tuple4.getT3())));
         })
                 // Error handling
                 .onErrorResume(CustomException.class, e -> Mono.just(new PostInfoResponse(false, false, e.getMessage(), null)))

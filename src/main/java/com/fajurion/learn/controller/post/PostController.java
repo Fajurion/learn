@@ -53,7 +53,7 @@ public class PostController {
     public Mono<PostListResponse> list(@RequestBody PostListForm form) {
 
         // Check if request is valid
-        if(form.currentScroll() < 0) {
+        if(form.currentScroll() < 0 || form.filter() > 1 || form.filter() < 0) {
             return Mono.just(new PostListResponse(false, true, "server.error", new ArrayList<>()));
         }
 
@@ -65,7 +65,7 @@ public class PostController {
             }
 
             // List the posts
-            return postService.getPostsByLikes(form.topic(), form.currentScroll(), session.getAccount());
+            return postService.getPosts(form.topic(), form.currentScroll(), session.getAccount(), form.filter(), form.query());
         }).flatMap(list -> {
 
             if(list == null) {
@@ -81,7 +81,7 @@ public class PostController {
     }
 
     // Record for post list form
-    public record PostListForm(String token, int topic, int currentScroll) {}
+    public record PostListForm(String token, String query, int topic, int currentScroll, int filter) {}
 
     // Record for post list response
     public record PostListResponse(boolean success, boolean error, String message, ArrayList<PostResponse> posts) {}

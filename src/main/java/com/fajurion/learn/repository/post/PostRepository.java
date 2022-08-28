@@ -19,4 +19,16 @@ public interface PostRepository extends ReactiveCrudRepository<Post, Integer> {
     @Query("select * from posts where topic = :topic order by likes DESC LIMIT :limit OFFSET :offset")
     Flux<Post> sortPostsByLikes(@Param("topic") int topic, @Param("limit") int limit, @Param("offset") int offset);
 
+    // Sort by date descending with limit and offset
+    @Query("select * from posts where topic = :topic order by date DESC LIMIT :limit OFFSET :offset")
+    Flux<Post> sortPostsByDate(@Param("topic") int topic, @Param("limit") int limit, @Param("offset") int offset);
+
+    // Sort by date descending with limit and offset and search for title
+    @Query("select * from posts where topic = :topic and title like :query order by date DESC LIMIT :limit OFFSET :offset")
+    Flux<Post> searchPostsByDate(@Param("query") String query, @Param("topic") int topic, @Param("limit") int limit, @Param("offset") int offset);
+
+    // Sort by date descending with limit and offset and search for title
+    @Query("select * from posts where topic = :topic and title like :query order by likes DESC LIMIT :limit OFFSET :offset")
+    Flux<Post> searchPostsByLikes(@Param("query") String query, @Param("topic") int topic, @Param("limit") int limit, @Param("offset") int offset);
+
 }

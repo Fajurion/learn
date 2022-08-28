@@ -64,11 +64,10 @@ public class AccountController {
 
             // Create a new session
             return sessionService.generateSession(account.getId());
-        }).flatMap(session ->  Mono.just(new LoginResponse(true, false, session.getToken())))
+        }).map(session -> new LoginResponse(true, false, session.getToken()))
 
                 // Error handling
                 .onErrorResume(CustomException.class, error -> Mono.just(new LoginResponse(false, false, error.getMessage())))
-                .onErrorResume(error -> Mono.just(new LoginResponse(false, true, error.getMessage())))
                 .onErrorReturn(new LoginResponse(false, true, "server.error"));
     }
 

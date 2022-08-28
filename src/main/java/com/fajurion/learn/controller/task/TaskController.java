@@ -31,7 +31,6 @@ public class TaskController {
     @CrossOrigin
     public Mono<TaskListResponse> list(@RequestBody TaskListForm form) {
 
-        System.out.println(form.topic());
         // Check if form is valid
         if(form.token() == null || form.offset() < 0 || form.limit() > 20 || form.limit() < 0) {
             return Mono.just(new TaskListResponse(false, false, "empty", null));
@@ -45,7 +44,7 @@ public class TaskController {
             }
 
             // Get tasks in topic
-            return taskService.sortTasksByLikes(form.topic(), form.limit(), form.offset());
+            return taskService.sortTasksByLikes(form.topic(), form.limit(), form.offset(), form.query(), form.difficulty(), form.sorting());
         }).map(list -> {
 
             // Return response
@@ -57,7 +56,7 @@ public class TaskController {
     }
 
     // Form for listing tasks
-    public record TaskListForm(String token, int topic, int offset, int limit) {}
+    public record TaskListForm(String token, int topic, int offset, int limit, String query, int sorting, int difficulty) {}
 
     // Response to return tasks
     public record TaskListResponse(boolean success, boolean error, String message, List<TaskResponse> tasks) {}
