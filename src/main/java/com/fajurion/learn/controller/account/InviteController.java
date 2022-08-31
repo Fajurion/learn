@@ -6,6 +6,7 @@ import com.fajurion.learn.repository.account.invite.InviteRepository;
 import com.fajurion.learn.repository.account.ranks.RankRepository;
 import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.util.ConstantConfiguration;
+import com.fajurion.learn.util.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -48,7 +49,7 @@ public class InviteController {
         return sessionService.checkAndRefreshSession(inviteCreateForm.token()).flatMap(session -> {
 
             if(session == null) {
-                return Mono.error(new RuntimeException("session.expired"));
+                return Mono.error(new CustomException("session.expired"));
             }
 
             // Get account from session
@@ -56,7 +57,7 @@ public class InviteController {
         }).flatMap(account -> {
 
             if(account == null) {
-                return Mono.error(new RuntimeException("session.expired.deleted"));
+                return Mono.error(new CustomException("session.expired.deleted"));
             }
 
             // Set id in atomic reference
@@ -68,7 +69,7 @@ public class InviteController {
 
             // Check if the rank has the required permission level
             if(rank.getLevel() < ConstantConfiguration.PERMISSION_LEVEL_CREATE_INVITE) {
-                return Mono.error(new RuntimeException("no_permission"));
+                return Mono.error(new CustomException("no_permission"));
             }
 
             // Create invite
@@ -80,11 +81,10 @@ public class InviteController {
 
             // Return response with invite
             return new InviteCreateResponse(true, false, invite.getCode());
-        }).onErrorResume(RuntimeException.class, e -> Mono.just(new InviteCreateResponse(false, false, e.getMessage())))
-                .onErrorResume(e -> {
-                    e.printStackTrace();
-                    return Mono.just(new InviteCreateResponse(false, true, "server.error"));
-                });
+        })
+                // Error handling
+                .onErrorResume(CustomException.class, e -> Mono.just(new InviteCreateResponse(false, false, e.getMessage())))
+                .onErrorReturn(new InviteCreateResponse(false, true, "server.error"));
     }
 
     // Record for response when creating an invite

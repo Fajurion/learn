@@ -3,6 +3,7 @@ create table if not exists accounts (id SERIAL NOT NULL, username VARCHAR(32), r
 create table if not exists sessions (id SERIAL NOT NULL, token VARCHAR(100), account INT, creation BIGINT, PRIMARY KEY (token));
 create table if not exists invites (id SERIAL NOT NULL, code VARCHAR(64), creator INT, data TEXT, PRIMARY KEY (id));
 create table if not exists ranks (id SERIAL NOT NULL, name VARCHAR(32), level INT, PRIMARY KEY (id));
+create table if not exists tfa (id SERIAL NOT NULL, account INT, secret VARCHAR(32), backup VARCHAR(32), PRIMARY KEY (id));
 
 /* Create tables for Topics and Subtopics */
 create table if not exists topics (id SERIAL NOT NULL, parent INT, name VARCHAR(50), creator INT, locked BOOLEAN, category BOOLEAN, PRIMARY KEY (id));

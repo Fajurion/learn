@@ -20,11 +20,14 @@ import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.converter.BufferedImageHttpMessageConverter;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.r2dbc.connection.init.CompositeDatabasePopulator;
 import org.springframework.r2dbc.connection.init.ConnectionFactoryInitializer;
 import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator;
 import reactor.core.publisher.Mono;
 
+import java.awt.image.BufferedImage;
 import java.util.UUID;
 
 @SpringBootApplication
@@ -70,6 +73,11 @@ public class LearnApplication {
 	public LearnApplication(RankRepository rankRepository, AccountRepository accountRepository) {
 		this.rankRepository = rankRepository;
 		this.accountRepository = accountRepository;
+	}
+
+	@Bean
+	public HttpMessageConverter<BufferedImage> bufferedImageHttpMessageConverter() {
+		return new BufferedImageHttpMessageConverter();
 	}
 
 	@Autowired
