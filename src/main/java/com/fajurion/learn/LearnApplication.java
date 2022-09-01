@@ -80,9 +80,6 @@ public class LearnApplication {
 		return new BufferedImageHttpMessageConverter();
 	}
 
-	@Autowired
-	private LikeRepository likeRepository;
-
 	/**
 	 * Create ranks on application startup
 	 *

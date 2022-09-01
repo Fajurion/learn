@@ -5,7 +5,7 @@ import com.fajurion.learn.util.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
+import reactor.util.function.Tuple3;
 
 import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
@@ -23,7 +23,7 @@ public class SessionService {
         this.sessionRepository = sessionRepository;
     }
 
-    public Mono<Session> generateSession(int userID) {
+    public Mono<Session> generateSession(int userID, String type) {
 
         // Generate a unique session identifier
         AtomicReference<String> token = new AtomicReference<>(generateRandomString(99));
@@ -47,14 +47,18 @@ public class SessionService {
             }
 
             // Check if session token is already used
-            return Mono.zip(sessionRepository.save(new Session(token.get(), userID, System.currentTimeMillis())), sessionRepository.deleteAll(toDelete).thenReturn(new Session("d", -1, -1)));
-        }).map(Tuple2::getT1);
+            return Mono.zip(sessionRepository.save(new Session(token.get(), userID, type.equals("tfa") ? System.currentTimeMillis() - 10000 : System.currentTimeMillis(), type)),
+                    sessionRepository.deleteAll(toDelete).thenReturn(new Session("d", -1, -1, "")),
+
+                    // Delete all tfa sessions
+                    sessionRepository.deleteAllByAccountAndType(userID, "tfa").thenReturn("test"));
+        }).map(Tuple3::getT1);
     }
 
     public Mono<Session> checkAndRefreshSession(String token) {
 
         // Check if session exists
-        return sessionRepository.getSessionsByToken(token).collectList().flatMap(sessions -> {
+        return sessionRepository.getSessionsByTokenAndType(token, "access").collectList().flatMap(sessions -> {
 
             // Check if there are two sessions with the same token (really unlikely)
             if(sessions.size() > 1) {

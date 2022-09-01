@@ -26,4 +26,7 @@ public class Session {
     @Column @NonNull
     private long creation;
 
+    @Column @NonNull
+    private String type;
+
 }

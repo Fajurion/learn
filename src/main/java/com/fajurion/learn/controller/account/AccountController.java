@@ -3,7 +3,9 @@ package com.fajurion.learn.controller.account;
 import com.fajurion.learn.repository.account.Account;
 import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.invite.InviteRepository;
+import com.fajurion.learn.repository.account.session.Session;
 import com.fajurion.learn.repository.account.session.SessionService;
+import com.fajurion.learn.repository.account.tfa.TwoFactorRepository;
 import com.fajurion.learn.util.CustomException;
 import com.fajurion.learn.util.AccountUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +25,18 @@ public class AccountController {
     // Repository for checking invites
     private final InviteRepository inviteRepository;
 
+    // Repository for getting two factor data
+    private final TwoFactorRepository twoFactorRepository;
+
     @Autowired
-    public AccountController(AccountRepository accountRepository, SessionService sessionService, InviteRepository inviteRepository) {
+    public AccountController(AccountRepository accountRepository,
+                             SessionService sessionService,
+                             InviteRepository inviteRepository,
+                             TwoFactorRepository twoFactorRepository) {
         this.accountRepository = accountRepository;
         this.sessionService = sessionService;
         this.inviteRepository = inviteRepository;
+        this.twoFactorRepository = twoFactorRepository;
     }
 
     /**
@@ -46,25 +55,30 @@ public class AccountController {
         }
 
         // Check if user exists
-        return accountRepository.getAccountsByUsername(loginForm.username()).hasElements().flatMap(success -> {
+        return accountRepository.getAccountsByUsername(loginForm.username()).elementAt(0).onErrorReturn(new Account("", "", "", "", "", -1)).flatMap(account -> {
 
-            // false: Invalid username
-            if(!success) {
+            // invitor = -1: Invalid username
+            if(account.getInvitor() == -1) {
                 return Mono.error(new CustomException("login.invalid"));
             }
 
-            // Get account to verify password
-            return accountRepository.getAccountsByUsername(loginForm.username()).elementAt(0);
-        }).flatMap(account -> {
+            // Get account to verify password and zip with tfa response
+            return Mono.zip(accountRepository.getAccountsByUsername(loginForm.username()).elementAt(0),
+                    twoFactorRepository.getTwoFactorByAccount(account.getId()).hasElements());
+        }).flatMap(tuple -> {
 
             // Check password hash
-            if(!AccountUtil.getHash(loginForm.username(), loginForm.password()).equals(account.getPassword())) {
+            if(!AccountUtil.getHash(loginForm.username(), loginForm.password()).equals(tuple.getT1().getPassword())) {
                 return Mono.error(new CustomException("login.invalid"));
             }
 
-            // Create a new session
-            return sessionService.generateSession(account.getId());
-        }).map(session -> new LoginResponse(true, false, session.getToken()))
+            // Create a new session and zip with tfa token
+            return sessionService.generateSession(tuple.getT1().getId(), tuple.getT2() ? "tfa" : "access");
+        }).map(session -> {
+
+            // Return response
+            return new LoginResponse(true, false, session.getType() + ":" + session.getToken());
+        })
 
                 // Error handling
                 .onErrorResume(CustomException.class, error -> Mono.just(new LoginResponse(false, false, error.getMessage())))
@@ -138,7 +152,7 @@ public class AccountController {
         }).flatMap(invite -> accountRepository.save(new Account(registerForm.username(), registerForm.email(), "User", AccountUtil.getHash(registerForm.username(), registerForm.password()), "", invite.getCreator()))).flatMap(account -> {
 
             // Create new session
-            return sessionService.generateSession(account.getId());
+            return sessionService.generateSession(account.getId(), "access");
         }).flatMap(session -> {
 
             // Return login response with token
