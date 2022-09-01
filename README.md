@@ -5,7 +5,7 @@ Learn is a platform that tries to improve learning with a friend group with larg
 ## Note
 This is only a backend with now user interface. There is currently no documentation for the backend, we might add one in the future.
 
-#### Frontend
+## Frontend
 The frontend for this backend is currently still a private repository, we'll publish it when it is ready for production.
 
 ## Technologies
