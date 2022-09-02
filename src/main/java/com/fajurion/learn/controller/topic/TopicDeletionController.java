@@ -2,12 +2,11 @@ package com.fajurion.learn.controller.topic;
 
 import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.ranks.RankRepository;
-import com.fajurion.learn.repository.account.session.SessionRepository;
 import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.post.PostRepository;
 import com.fajurion.learn.repository.post.comments.CommentRepository;
 import com.fajurion.learn.repository.topic.TopicRepository;
-import com.fajurion.learn.util.ConstantConfiguration;
+import com.fajurion.learn.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -73,7 +72,7 @@ public class TopicDeletionController {
         }).flatMap(rank -> {
 
             // Check the permission level of the rank
-            if(rank.getLevel() < ConstantConfiguration.PERMISSION_LEVEL_DELETE_TOPIC) {
+            if(rank.getLevel() < Configuration.permissions.get("delete.topic")) {
                 return Mono.error(new RuntimeException("no_permission"));
             }
 

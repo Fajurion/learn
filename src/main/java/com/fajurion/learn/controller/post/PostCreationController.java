@@ -1,6 +1,5 @@
 package com.fajurion.learn.controller.post;
 
-import com.fajurion.learn.controller.image.ImageController;
 import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.ranks.Rank;
 import com.fajurion.learn.repository.account.ranks.RankRepository;
@@ -8,7 +7,7 @@ import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.post.Post;
 import com.fajurion.learn.repository.post.PostRepository;
 import com.fajurion.learn.repository.topic.TopicRepository;
-import com.fajurion.learn.util.ConstantConfiguration;
+import com.fajurion.learn.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -48,12 +47,12 @@ public class PostCreationController {
     public Mono<PostCreateResponse> create(@RequestBody PostCreateForm form) {
 
         // Check if content is too long
-        if(form.content().length() > ConstantConfiguration.MAXIMUM_CHARACTERS_POST) {
+        if(form.content().length() > Configuration.settings.get("max.characters.post")) {
             return Mono.just(new PostCreateResponse(false, false, "content.too_long"));
         }
 
         // Check if title is too long
-        if(form.title().length() > ConstantConfiguration.MAXIMUM_CHARACTERS_POST_TITLE) {
+        if(form.title().length() > Configuration.settings.get("max.characters.post.title")) {
             return Mono.just(new PostCreateResponse(false, false, "title.too_long"));
         }
 
@@ -96,7 +95,7 @@ public class PostCreationController {
             }
 
             // Check if topic is locked
-            if(topic.isLocked() && userRank.get().getLevel() < ConstantConfiguration.PERMISSION_LEVEL_CREATE_POST_LOCKED) {
+            if(topic.isLocked() && userRank.get().getLevel() < Configuration.permissions.get("create.post.locked")) {
                 return Mono.error(new RuntimeException("topic.locked"));
             }
 

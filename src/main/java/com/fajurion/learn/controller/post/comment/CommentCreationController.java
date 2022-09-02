@@ -4,7 +4,7 @@ import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.post.PostRepository;
 import com.fajurion.learn.repository.post.comments.Comment;
 import com.fajurion.learn.repository.post.comments.CommentRepository;
-import com.fajurion.learn.util.ConstantConfiguration;
+import com.fajurion.learn.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -43,7 +43,7 @@ public class CommentCreationController {
         }
 
         // Check if content fits requirements
-        if(form.content().length() > ConstantConfiguration.MAXIMUM_CHARACTERS_COMMENT) {
+        if(form.content().length() > Configuration.settings.get("max.characters.comment")) {
             return Mono.just(new CommentCreateResponse(false, false, "too_long"));
         }
 

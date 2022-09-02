@@ -1,6 +1,6 @@
 package com.fajurion.learn.repository.image;
 
-import com.fajurion.learn.util.ConstantConfiguration;
+import com.fajurion.learn.util.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ public class ImageService {
                     return stream.toByteArray();
                 })
                 .flatMap(array ->  {
-                    if(array.length > ConstantConfiguration.MAX_FILE_SIZE) {
+                    if(array.length > Configuration.settings.get("max.file.size")) {
                         return Mono.error(new RuntimeException("file.too_large"));
                     }
 

@@ -6,7 +6,7 @@ import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.post.PostRepository;
 import com.fajurion.learn.repository.post.comments.CommentRepository;
 import com.fajurion.learn.repository.post.likes.LikeRepository;
-import com.fajurion.learn.util.ConstantConfiguration;
+import com.fajurion.learn.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -73,7 +73,7 @@ public class PostDeletionController {
         }).flatMap(rank -> {
 
             // Check if rank has required permissions
-            if(rank.getLevel() < ConstantConfiguration.PERMISSION_LEVEL_DELETE_POST) {
+            if(rank.getLevel() < Configuration.permissions.get("delete.post")) {
                 return Mono.error(new RuntimeException("no_permission"));
             }
 

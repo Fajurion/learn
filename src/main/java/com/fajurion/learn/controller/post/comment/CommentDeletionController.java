@@ -4,7 +4,7 @@ import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.ranks.RankRepository;
 import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.post.comments.CommentRepository;
-import com.fajurion.learn.util.ConstantConfiguration;
+import com.fajurion.learn.util.Configuration;
 import com.fajurion.learn.util.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -66,7 +66,7 @@ public class CommentDeletionController {
         }).flatMap(rank -> {
 
             // Check if rank has required permission level
-            if(rank.getLevel() < ConstantConfiguration.PERMISSION_LEVEL_DELETE_COMMENT) {
+            if(rank.getLevel() < Configuration.permissions.get("delete.comment")) {
                 return Mono.error(new CustomException("no_permission"));
             }
 

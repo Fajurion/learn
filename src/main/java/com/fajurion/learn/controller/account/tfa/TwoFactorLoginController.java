@@ -8,13 +8,11 @@ import com.fajurion.learn.repository.account.tfa.TwoFactorRepository;
 import com.fajurion.learn.util.CustomException;
 import com.fajurion.learn.util.TwoFactorUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 @RestController
+@RequestMapping("/api/account")
 public class TwoFactorLoginController {
 
     // Repository for checking sessions
@@ -53,7 +51,7 @@ public class TwoFactorLoginController {
             }
 
             // Check if delay between tries is over
-            if(session.getCreation() + 10000 < System.currentTimeMillis()) {
+            if(session.getCreation() + 10000 > System.currentTimeMillis()) {
                 return Mono.error(new CustomException("wait"));
             }
 
@@ -77,7 +75,7 @@ public class TwoFactorLoginController {
 
             // Generate new session and zip with deletion of tfa token
             return Mono.zip(sessionService.generateSession(tuple.getT1().getAccount(), "access"),
-                    sessionRepository.delete(tuple.getT2()));
+                    sessionRepository.delete(tuple.getT2()).thenReturn("test"));
         }).map(tuple -> {
 
             // Return response

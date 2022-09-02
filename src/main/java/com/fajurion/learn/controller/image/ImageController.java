@@ -2,12 +2,11 @@ package com.fajurion.learn.controller.image;
 
 import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.ranks.RankRepository;
-import com.fajurion.learn.repository.account.session.SessionRepository;
 import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.image.Image;
 import com.fajurion.learn.repository.image.ImageRepository;
 import com.fajurion.learn.repository.image.ImageService;
-import com.fajurion.learn.util.ConstantConfiguration;
+import com.fajurion.learn.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -63,7 +62,7 @@ public class ImageController {
                                     @RequestHeader("Content-Length") int contentLength) {
 
         // Check if file is too large
-        if(contentLength > ConstantConfiguration.MAX_FILE_SIZE) {
+        if(contentLength > Configuration.settings.get("max.file.size")) {
             return Mono.error(new RuntimeException("file.too_large"));
         }
 
@@ -91,7 +90,7 @@ public class ImageController {
         }).flatMap(rank ->  {
 
             // Check if the account has the required permission level
-            if(rank.getLevel() < ConstantConfiguration.PERMISSION_LEVEL_UPLOAD_IMAGE) {
+            if(rank.getLevel() < Configuration.permissions.get("upload.image")) {
                 return Mono.error(new RuntimeException("no_permission"));
             }
 

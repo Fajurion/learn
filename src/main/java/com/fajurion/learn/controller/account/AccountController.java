@@ -4,6 +4,7 @@ import com.fajurion.learn.repository.account.Account;
 import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.invite.InviteRepository;
 import com.fajurion.learn.repository.account.session.Session;
+import com.fajurion.learn.repository.account.session.SessionRepository;
 import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.account.tfa.TwoFactorRepository;
 import com.fajurion.learn.util.CustomException;
@@ -28,15 +29,20 @@ public class AccountController {
     // Repository for getting two factor data
     private final TwoFactorRepository twoFactorRepository;
 
+    // Repository to delete sessions
+    private final SessionRepository sessionRepository;
+
     @Autowired
     public AccountController(AccountRepository accountRepository,
                              SessionService sessionService,
                              InviteRepository inviteRepository,
-                             TwoFactorRepository twoFactorRepository) {
+                             TwoFactorRepository twoFactorRepository,
+                             SessionRepository sessionRepository) {
         this.accountRepository = accountRepository;
         this.sessionService = sessionService;
         this.inviteRepository = inviteRepository;
         this.twoFactorRepository = twoFactorRepository;
+        this.sessionRepository = sessionRepository;
     }
 
     /**
@@ -159,10 +165,42 @@ public class AccountController {
             return Mono.just(new LoginResponse(true, false, session.getToken()));
         })
                 .onErrorResume(CustomException.class, e -> Mono.just(new LoginResponse(false, false, e.getMessage())))
-                .onErrorResume(e -> Mono.just(new LoginResponse(false, true, "server.error")))
-            .onErrorReturn(new LoginResponse(false, true, "server.error"));
+                .onErrorReturn(new LoginResponse(false, true, "server.error"));
     }
 
     // Record for register form
     public record RegisterForm(String email, String username, String password, String invite) {}
+
+    @PostMapping("/logout")
+    @CrossOrigin
+    public Mono<LogoutResponse> logOut(@RequestBody LogoutForm form) {
+
+        // Check if form is valid
+        if(form.token() == null) {
+            return Mono.just(new LogoutResponse(false, false, "invalid"));
+        }
+
+        // Get session
+        return sessionService.checkAndRefreshSession(form.token()).flatMap(session -> {
+
+            // Check if session exists
+            if(session == null) {
+                return Mono.error(new CustomException("session.expired"));
+            }
+
+            // Delete session
+            return sessionRepository.delete(session).thenReturn("d");
+        }).map(s -> new LogoutResponse(false, false, "session.expired")) // Automatic log out
+
+                // Error handling
+                .onErrorResume(CustomException.class, e -> Mono.just(new LogoutResponse(false, false, e.getMessage())))
+                .onErrorReturn(new LogoutResponse(false, true, "server.error"));
+    }
+
+    // Record for logging out
+    public record LogoutForm(String token) {}
+
+    // Response to logging out
+    public record LogoutResponse(boolean success, boolean error, String message) {}
+
 }

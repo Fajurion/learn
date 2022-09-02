@@ -5,7 +5,7 @@ import com.fajurion.learn.repository.account.ranks.RankRepository;
 import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.topic.Topic;
 import com.fajurion.learn.repository.topic.TopicRepository;
-import com.fajurion.learn.util.ConstantConfiguration;
+import com.fajurion.learn.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -76,7 +76,7 @@ public class TopicCreationController {
         }).flatMap(rank -> {
 
             // Check if the rank has the required permission level
-            if(rank.getLevel() < ConstantConfiguration.PERMISSION_LEVEL_CREATE_TOPIC) {
+            if(rank.getLevel() < Configuration.permissions.get("create.topic")) {
                 return Mono.error(new RuntimeException("no_permission"));
             }
 

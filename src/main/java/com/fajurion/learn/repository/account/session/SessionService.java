@@ -1,6 +1,6 @@
 package com.fajurion.learn.repository.account.session;
 
-import com.fajurion.learn.util.ConstantConfiguration;
+import com.fajurion.learn.util.Configuration;
 import com.fajurion.learn.util.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,17 +42,18 @@ public class SessionService {
             }
 
             // Check if user has too many sessions
-            if (list.size() - toDelete.size() >= ConstantConfiguration.MAXIMUM_CONCURRENT_SESSIONS) {
+            if (list.size() - toDelete.size() >= Configuration.settings.get("max.sessions")) {
                 return Mono.error(new CustomException("too_many_sessions"));
             }
 
             // Check if session token is already used
-            return Mono.zip(sessionRepository.save(new Session(token.get(), userID, type.equals("tfa") ? System.currentTimeMillis() - 10000 : System.currentTimeMillis(), type)),
-                    sessionRepository.deleteAll(toDelete).thenReturn(new Session("d", -1, -1, "")),
-
+            return Mono.zip(
                     // Delete all tfa sessions
-                    sessionRepository.deleteAllByAccountAndType(userID, "tfa").thenReturn("test"));
-        }).map(Tuple3::getT1);
+                    sessionRepository.deleteAllByAccountAndType(userID, "tfa").thenReturn("test"),
+
+                    sessionRepository.save(new Session(token.get(), userID, type.equals("tfa") ? System.currentTimeMillis() - 10000 : System.currentTimeMillis(), type)),
+                    sessionRepository.deleteAll(toDelete).thenReturn(new Session("d", -1, -1, "")));
+        }).map(Tuple3::getT2);
     }
 
     public Mono<Session> checkAndRefreshSession(String token) {
@@ -70,7 +71,7 @@ public class SessionService {
             }
 
             // Check if session is timed out
-            if(sessions.get(0).getCreation() + ConstantConfiguration.SESSION_TIMEOUT_DELAY < System.currentTimeMillis()) {
+            if(sessions.get(0).getCreation() + Configuration.settings.get("session.timeout") < System.currentTimeMillis()) {
 
                 // Delete session
                 return sessionRepository.delete(sessions.get(0)).thenReturn("test");

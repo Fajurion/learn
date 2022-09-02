@@ -5,7 +5,7 @@ import com.fajurion.learn.repository.account.invite.Invite;
 import com.fajurion.learn.repository.account.invite.InviteRepository;
 import com.fajurion.learn.repository.account.ranks.RankRepository;
 import com.fajurion.learn.repository.account.session.SessionService;
-import com.fajurion.learn.util.ConstantConfiguration;
+import com.fajurion.learn.util.Configuration;
 import com.fajurion.learn.util.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -68,7 +68,7 @@ public class InviteController {
         }).flatMap(rank -> {
 
             // Check if the rank has the required permission level
-            if(rank.getLevel() < ConstantConfiguration.PERMISSION_LEVEL_CREATE_INVITE) {
+            if(rank.getLevel() < Configuration.permissions.get("create.invite")) {
                 return Mono.error(new CustomException("no_permission"));
             }
 

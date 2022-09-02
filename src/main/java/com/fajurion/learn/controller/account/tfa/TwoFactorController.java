@@ -55,14 +55,14 @@ public class TwoFactorController {
         return sessionService.checkAndRefreshSession(form.token()).flatMap(session -> {
 
             if(session == null) {
-                return Mono.error(new CustomException("session.invalid"));
+                return Mono.error(new CustomException("session.expired"));
             }
 
             // Check password
             return accountRepository.findById(session.getAccount());
         }).flatMap(account -> {
 
-            if(account.getPassword().equals(AccountUtil.getHash(account.getUsername(), account.getPassword()))) {
+            if(!account.getPassword().equals(AccountUtil.getHash(account.getUsername(), form.currentPassword()))) {
                 return Mono.error(new CustomException("invalid.password"));
             }
 
@@ -98,14 +98,14 @@ public class TwoFactorController {
         return sessionService.checkAndRefreshSession(form.token()).flatMap(session -> {
 
                     if(session == null) {
-                        return Mono.error(new CustomException("session.invalid"));
+                        return Mono.error(new CustomException("session.expired"));
                     }
 
                     // Check password
                     return accountRepository.findById(session.getAccount());
                 }).flatMap(account -> {
 
-                    if(account.getPassword().equals(AccountUtil.getHash(account.getUsername(), account.getPassword()))) {
+                    if(!account.getPassword().equals(AccountUtil.getHash(account.getUsername(), form.currentPassword()))) {
                         return Mono.error(new CustomException("invalid.password"));
                     }
 
@@ -148,5 +148,78 @@ public class TwoFactorController {
         return ResponseEntity.ok()
                 .body(new InputStreamResource(is));
     }
+
+    @PostMapping("/api/settings/tfa/status")
+    @CrossOrigin
+    public Mono<TwoFactorStatusResponse> status(@RequestBody TwoFactorStatusForm form) {
+
+        // Check if form is valid
+        if(form.token() == null) {
+            return Mono.just(new TwoFactorStatusResponse(false, false, "invalid", false));
+        }
+
+        // Check if session is valid
+        return sessionService.checkAndRefreshSession(form.token()).flatMap(session -> {
+
+            if(session == null) {
+                return Mono.error(new CustomException("session.expired"));
+            }
+
+            // Check tfa status
+            return twoFactorRepository.getTwoFactorByAccount(session.getAccount()).elementAt(0).onErrorReturn(new TwoFactor(-1, "", ""));
+        }).map(twoFactor -> {
+
+            // Return response
+            return new TwoFactorStatusResponse(true, false, "success", twoFactor.getAccount() != -1);
+        })
+            // Error handling
+            .onErrorResume(CustomException.class, e -> Mono.just(new TwoFactorStatusResponse(false, false, e.getMessage(), false)))
+            .onErrorReturn(new TwoFactorStatusResponse(false, true, "server.error", false));
+    }
+
+    // Record for requesting data about tfa
+    public record TwoFactorStatusForm(String token) {}
+
+    // Response to requesting status
+    public record TwoFactorStatusResponse(boolean success, boolean error, String message, boolean enabled) {}
+
+    @PostMapping("/api/settings/tfa/test")
+    @CrossOrigin
+    public Mono<TwoFactorCheckResponse> test(@RequestBody TwoFactorCheckForm form) {
+
+        // Check if form is valid
+        if(form.token() == null) {
+            return Mono.just(new TwoFactorCheckResponse(false, false, "invalid", false));
+        }
+
+        // Check if session is valid
+        return sessionService.checkAndRefreshSession(form.token()).flatMap(session -> {
+
+            if(session == null) {
+                return Mono.error(new CustomException("session.expired"));
+            }
+
+            // Get two factor secret
+            return twoFactorRepository.getTwoFactorByAccount(session.getAccount()).elementAt(0).onErrorReturn(new TwoFactor(-1, "", ""));
+        }).flatMap(twoFactor -> {
+
+            // Check if tfa is enabled
+            if(twoFactor.getAccount() == -1) {
+                return Mono.error(new CustomException("not_enabled"));
+            }
+
+            // Return response
+            return Mono.just(new TwoFactorCheckResponse(true, false, "success", TwoFactorUtil.getTOTPCode(twoFactor.getSecret()).equals(form.code())));
+        })
+            // Error handling
+            .onErrorResume(CustomException.class, e -> Mono.just(new TwoFactorCheckResponse(false, false, e.getMessage(), false)))
+            .onErrorReturn(new TwoFactorCheckResponse(false, true, "server.error", false));
+    }
+
+    // Record for requesting a code test
+    public record TwoFactorCheckForm(String token, String code) {}
+
+    // Response to checking tfa code
+    public record TwoFactorCheckResponse(boolean success, boolean error, String message, boolean successful) {}
 
 }

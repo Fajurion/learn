@@ -11,6 +11,7 @@ import com.fajurion.learn.repository.post.likes.LikeRepository;
 import com.fajurion.learn.repository.topic.Topic;
 import com.fajurion.learn.repository.topic.TopicRepository;
 import com.fajurion.learn.util.AccountUtil;
+import com.fajurion.learn.util.Configuration;
 import com.fajurion.learn.util.CustomException;
 import io.r2dbc.spi.ConnectionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,7 @@ public class LearnApplication {
 	 * @param args Start arguments
 	 */
 	public static void main(String[] args) {
+		Configuration.init();
 		SpringApplication.run(LearnApplication.class, args);
 	}
 
