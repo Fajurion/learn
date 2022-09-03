@@ -1,10 +1,10 @@
-package com.fajurion.learn.repository.tasks.reports;
+package com.fajurion.learn.repository.tests;
 
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface TReportRepository extends ReactiveCrudRepository<TReport, Integer> {
+public interface ExamRepository extends ReactiveCrudRepository<Exam, Integer> {
 
 
 

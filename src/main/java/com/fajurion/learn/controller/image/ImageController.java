@@ -7,6 +7,7 @@ import com.fajurion.learn.repository.image.Image;
 import com.fajurion.learn.repository.image.ImageRepository;
 import com.fajurion.learn.repository.image.ImageService;
 import com.fajurion.learn.util.Configuration;
+import com.fajurion.learn.util.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -63,7 +64,7 @@ public class ImageController {
 
         // Check if file is too large
         if(contentLength > Configuration.settings.get("max.file.size")) {
-            return Mono.error(new RuntimeException("file.too_large"));
+            return Mono.just(new ImageUploadResponse(false, false, "file.too_large"));
         }
 
         AtomicReference<Integer> userID = new AtomicReference<>();
@@ -71,7 +72,7 @@ public class ImageController {
         return sessionService.checkAndRefreshSession(token).flatMap(session -> {
 
             if(session == null) {
-                return Mono.error(new RuntimeException("session.expired"));
+                return Mono.error(new CustomException("session.expired"));
             }
 
             // Get account from session
@@ -79,7 +80,7 @@ public class ImageController {
         }).flatMap(account -> {
 
             if(account == null) {
-                return Mono.error(new RuntimeException("session.expired.deleted"));
+                return Mono.error(new CustomException("session.expired.deleted"));
             }
 
             // Set id in atomic reference
@@ -91,7 +92,7 @@ public class ImageController {
 
             // Check if the account has the required permission level
             if(rank.getLevel() < Configuration.permissions.get("upload.image")) {
-                return Mono.error(new RuntimeException("no_permission"));
+                return Mono.error(new CustomException("no_permission"));
             }
 
             // Check for correct file type
@@ -99,7 +100,7 @@ public class ImageController {
         }).flatMap(check -> {
             
             if(!check) {
-                return Mono.error(new RuntimeException("upload.failed"));
+                return Mono.error(new CustomException("upload.failed"));
             }
 
             // Transform file part into byte array
@@ -108,14 +109,14 @@ public class ImageController {
                 .flatMap(image -> {
 
                     if(image == null) {
-                        return Mono.error(new RuntimeException("upload.failed"));
+                        return Mono.error(new CustomException("upload.failed"));
                     }
 
                     return Mono.just(new ImageUploadResponse(true, false, image.getId() + ""));
                 })
 
                 // Error handling
-                .onErrorResume(RuntimeException.class, e -> Mono.just(new ImageUploadResponse(false, false, e.getMessage())))
+                .onErrorResume(CustomException.class, e -> Mono.just(new ImageUploadResponse(false, false, e.getMessage())))
                 .onErrorResume(e -> Mono.just(new ImageUploadResponse(false, true, "server.error")));
     }
 
@@ -129,7 +130,7 @@ public class ImageController {
         return sessionService.checkAndRefreshSession(token).flatMap(session -> {
 
             if(session == null) {
-                return Mono.error(new RuntimeException("session.expired"));
+                return Mono.error(new CustomException("session.expired"));
             }
 
             // Get account from session
@@ -137,7 +138,7 @@ public class ImageController {
         }).flatMap(account -> {
 
             if(account == null) {
-                return Mono.error(new RuntimeException("session.expired.deleted"));
+                return Mono.error(new CustomException("session.expired.deleted"));
             }
 
             // Get the rank of the user
