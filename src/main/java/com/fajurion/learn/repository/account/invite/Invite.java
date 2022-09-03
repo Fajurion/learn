@@ -20,6 +20,6 @@ public class Invite {
     final int creator;
 
     @Column
-    final String data;
+    final long date;
 
 }

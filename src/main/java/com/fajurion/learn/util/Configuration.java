@@ -10,6 +10,9 @@ public class Configuration {
     // Settings map
     public static final ConcurrentHashMap<String, Integer> settings = new ConcurrentHashMap<>();
 
+    // Constants map
+    public static final ConcurrentHashMap<String, String> constants = new ConcurrentHashMap<>();
+
     public static void init() {
 
         // Initialize permissions
@@ -29,6 +32,9 @@ public class Configuration {
         settings.put("max.characters.post", 6000);
         settings.put("max.characters.post.title", 50);
         settings.put("max.characters.comment", 500);
+
+        // Initialize constants
+        constants.put("url", "https://localhost:8880/");
 
     }
 }

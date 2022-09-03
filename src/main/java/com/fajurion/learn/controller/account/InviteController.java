@@ -7,10 +7,20 @@ import com.fajurion.learn.repository.account.ranks.RankRepository;
 import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.util.Configuration;
 import com.fajurion.learn.util.CustomException;
+import com.fajurion.learn.util.TwoFactorUtil;
+import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -39,49 +49,43 @@ public class InviteController {
     }
 
     @RequestMapping("/create")
-    @ResponseBody @CrossOrigin
+    @CrossOrigin
     public Mono<InviteCreateResponse> createInvite(@RequestBody InviteCreateForm inviteCreateForm) {
-
-        // Atomic reference for user account id
-        AtomicReference<Integer> userID = new AtomicReference<>();
 
         // Check if session is valid
         return sessionService.checkAndRefreshSession(inviteCreateForm.token()).flatMap(session -> {
 
-            if(session == null) {
-                return Mono.error(new CustomException("session.expired"));
-            }
+                    if (session == null) {
+                        return Mono.error(new CustomException("session.expired"));
+                    }
 
-            // Get account from session
-            return accountRepository.findById(session.getAccount());
-        }).flatMap(account -> {
+                    // Get account from session
+                    return accountRepository.findById(session.getAccount());
+                }).flatMap(account -> {
 
-            if(account == null) {
-                return Mono.error(new CustomException("session.expired.deleted"));
-            }
+                    if (account == null) {
+                        return Mono.error(new CustomException("session.expired"));
+                    }
 
-            // Set id in atomic reference
-            userID.set(account.getId());
+                    // Get the rank of the user and zip with account
+                    return Mono.zip(rankRepository.getRankByName(account.getRank()), Mono.just(account));
+                }).flatMap(tuple -> {
 
-            // Get the rank of the user
-            return rankRepository.getRankByName(account.getRank());
-        }).flatMap(rank -> {
+                    // Check if the rank has the required permission level
+                    if (tuple.getT1().getLevel() < Configuration.permissions.get("create.invite")) {
+                        return Mono.error(new CustomException("no_permission"));
+                    }
 
-            // Check if the rank has the required permission level
-            if(rank.getLevel() < Configuration.permissions.get("create.invite")) {
-                return Mono.error(new CustomException("no_permission"));
-            }
+                    // Create invite
+                    Invite invite = new Invite(UUID.randomUUID().toString(), tuple.getT2().getId(), System.currentTimeMillis());
 
-            // Create invite
-            Invite invite = new Invite(UUID.randomUUID().toString(), userID.get(), "");
+                    // Save invite in repository
+                    return inviteRepository.save(invite);
+                }).map(invite -> {
 
-            // Save invite in repository
-            return inviteRepository.save(invite);
-        }).map(invite -> {
-
-            // Return response with invite
-            return new InviteCreateResponse(true, false, invite.getCode());
-        })
+                    // Return response with invite
+                    return new InviteCreateResponse(true, false, invite.getCode());
+                })
                 // Error handling
                 .onErrorResume(CustomException.class, e -> Mono.just(new InviteCreateResponse(false, false, e.getMessage())))
                 .onErrorReturn(new InviteCreateResponse(false, true, "server.error"));
@@ -92,5 +96,22 @@ public class InviteController {
 
     // Record for invite create form
     public record InviteCreateForm(String token) {}
+
+    @GetMapping(value = "/image", produces = "image/png")
+    @CrossOrigin
+    public ResponseEntity<InputStreamResource> getCodeImage(@RequestParam("code") String code) throws WriterException, IOException {
+
+        // Get the qr code
+        BufferedImage image = TwoFactorUtil.createQRCode(Configuration.constants.get("url") + "register?code=" + code);
+
+        // Turn qr code into input stream
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", os);
+        InputStream is = new ByteArrayInputStream(os.toByteArray());
+
+        // Return new Input stream resource
+        return ResponseEntity.ok()
+                .body(new InputStreamResource(is));
+    }
 
 }
