@@ -1,5 +1,3 @@
-drop table if exists invites;
-
 /* Create tables for account management */
 create table if not exists accounts (id SERIAL NOT NULL, username VARCHAR(32), rank VARCHAR(32), email VARCHAR(32), password VARCHAR(512), invitor INT, data TEXT, PRIMARY KEY (id));
 create table if not exists sessions (id SERIAL NOT NULL, token VARCHAR(100), account INT, creation BIGINT, type VARCHAR(16), PRIMARY KEY (token));
@@ -25,3 +23,6 @@ create table if not exists groups (id SERIAL NOT NULL, name VARCHAR(32), descrip
 create table if not exists exams (id SERIAL NOT NULL, name VARCHAR(32), board VARCHAR(200), date BIGINT, groupID INT, PRIMARY KEY (id));
 create table if not exists exam_topics (id SERIAL NOT NULL, test INT, topic INT, PRIMARY KEY (id));
 create table if not exists members (id SERIAL NOT NULL, class INT, account INT, joined BIGINT, PRIMARY KEY (id));
+
+/* Create tables for Reports  */
+create table if not exists reports (id SERIAL NOT NULL, creator INT, date BIGINT, url VARCHAR(200), description VARCHAR(200), PRIMARY KEY (id));

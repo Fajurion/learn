@@ -80,10 +80,7 @@ public class TaskCreationController {
         })
                 // Error handling
                 .onErrorResume(CustomException.class, e -> Mono.just(new TaskCreateResponse(false, false, e.getMessage())))
-                .onErrorResume( e -> {
-                    System.out.println(e.getMessage());
-                    return Mono.just(new TaskCreateResponse(false, true, "server.error"));
-                });
+                .onErrorReturn(new TaskCreateResponse(false, true, "server.error"));
     }
 
     // Form for creating tasks
