@@ -1,5 +1,8 @@
 package com.fajurion.learn.repository.account.session;
 
+import com.fajurion.learn.repository.account.Account;
+import com.fajurion.learn.repository.account.AccountRepository;
+import com.fajurion.learn.repository.account.ranks.RankRepository;
 import com.fajurion.learn.util.Configuration;
 import com.fajurion.learn.util.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +21,19 @@ public class SessionService {
     // Repository for accessing sessions
     private final SessionRepository sessionRepository;
 
+    // Repository for getting account data
+    private final AccountRepository accountRepository;
+
+    // Repository for getting ranks
+    private final RankRepository rankRepository;
+
     @Autowired
-    public SessionService(SessionRepository sessionRepository) {
+    public SessionService(SessionRepository sessionRepository,
+                          AccountRepository accountRepository,
+                          RankRepository rankRepository) {
         this.sessionRepository = sessionRepository;
+        this.accountRepository = accountRepository;
+        this.rankRepository = rankRepository;
     }
 
     public Mono<Session> generateSession(int userID, String type) {
@@ -90,6 +103,41 @@ public class SessionService {
             }
 
             return Mono.just(null);
+        });
+    }
+
+    /**
+     * Combines session flow and permission
+     * flow with the rank system into one
+     *
+     * @param token Session token
+     * @param permission Permission
+     * @return If the user has the permission
+     */
+    public Mono<Boolean> checkPermissionAndRefresh(String token, String permission) {
+
+        // Check session token
+        return checkAndRefreshSession(token).flatMap(session -> {
+
+            if(session == null) {
+                return Mono.error(new CustomException("session.expired"));
+            }
+
+            // Get account
+            return accountRepository.findById(session.getAccount()).onErrorReturn(new Account("", "", "", "", "", -1));
+        }).flatMap(account -> {
+
+            // Check if account exists
+            if(account.getInvitor() == -1) {
+                return Mono.error(new CustomException("session.expired"));
+            }
+
+            // Get rank
+            return rankRepository.getRankByName(account.getRank());
+        }).map(rank -> {
+
+            // Check if rank has permission
+            return Configuration.permissions.get(permission) > rank.getLevel();
         });
     }
 

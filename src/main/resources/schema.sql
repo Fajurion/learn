@@ -1,3 +1,5 @@
+drop table if exists groups, exams;
+
 /* Create tables for account management */
 create table if not exists accounts (id SERIAL NOT NULL, username VARCHAR(32), rank VARCHAR(32), email VARCHAR(32), password VARCHAR(512), invitor INT, data TEXT, PRIMARY KEY (id));
 create table if not exists sessions (id SERIAL NOT NULL, token VARCHAR(100), account INT, creation BIGINT, type VARCHAR(16), PRIMARY KEY (token));
@@ -18,9 +20,9 @@ create table if not exists comments (id SERIAL NOT NULL, topic INT, post INT, cr
 create table if not exists tasks (id SERIAL NOT NULL, topic INT, creator INT, difficulty INT, likes INT, date BIGINT, title VARCHAR(50), task VARCHAR(200), content VARCHAR, explanation VARCHAR(512), PRIMARY KEY (id));
 create table if not exists task_likes (id SERIAL NOT NULL, account INT, task INT, PRIMARY KEY (id));
 
-/* Create tables for Classes, Members and Tests */
-create table if not exists groups (id SERIAL NOT NULL, name VARCHAR(32), description VARCHAR(200), creator INT, PRIMARY KEY (id));
-create table if not exists exams (id SERIAL NOT NULL, name VARCHAR(32), board VARCHAR(200), date BIGINT, groupID INT, PRIMARY KEY (id));
+/* Create tables for Classes, Members, Exams and Exam Topics */
+create table if not exists groups (id SERIAL NOT NULL, name VARCHAR(32), description VARCHAR(500), creator INT, PRIMARY KEY (id));
+create table if not exists exams (id SERIAL NOT NULL, name VARCHAR(32), board VARCHAR(500), date BIGINT, groupID INT, PRIMARY KEY (id));
 create table if not exists exam_topics (id SERIAL NOT NULL, test INT, topic INT, PRIMARY KEY (id));
 create table if not exists members (id SERIAL NOT NULL, class INT, account INT, joined BIGINT, PRIMARY KEY (id));
 

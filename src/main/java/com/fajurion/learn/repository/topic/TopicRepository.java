@@ -15,4 +15,7 @@ public interface TopicRepository extends ReactiveCrudRepository<Topic, Integer> 
 
     Mono<Long> countTopicsByParent(@Param("parent") int parent);
 
+    @Query("select * from topics where name like :query order by id limit :limit offset :offset")
+    Flux<Topic> searchTopicsByName(@Param("query") String query, @Param("limit") int limit, @Param("offset") int offset);
+
 }

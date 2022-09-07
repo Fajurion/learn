@@ -92,4 +92,32 @@ public class TopicController {
     // Record for topic get response
     public record GetTopicResponse(boolean success, boolean error, String message, Topic topic) {}
 
+    @PostMapping("/search")
+    @CrossOrigin
+    public Mono<ListTopicsResponse> search(@RequestBody TopicSearchForm form) {
+
+        // Check if form is valid
+        if(form.token() == null || form.query() == null) {
+            return Mono.just(new ListTopicsResponse(false, false, "invalid", null));
+        }
+
+        // Check if session is valid
+        return sessionService.checkAndRefreshSession(form.token()).flatMap(session -> {
+
+                    if(session == null) {
+                        return Mono.error(new CustomException("session.expired"));
+                    }
+
+                    // Get all topics from the form
+                    return topicRepository.searchTopicsByName(form.query(), 50, form.offset()).collectList();
+                }).map(topics -> new ListTopicsResponse(true, false, "success", (ArrayList<Topic>) topics))
+
+                // Error handling
+                .onErrorResume(CustomException.class, error -> Mono.just(new ListTopicsResponse(false, false, error.getMessage(), new ArrayList<>())))
+                .onErrorReturn(new ListTopicsResponse(false, true, "server.error", new ArrayList<>()));
+    }
+
+    // Form for search topics
+    public record TopicSearchForm(String token, String query, int offset) {}
+
 }

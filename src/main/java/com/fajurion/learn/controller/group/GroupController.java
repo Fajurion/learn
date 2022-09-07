@@ -75,10 +75,7 @@ public class GroupController {
         })
                 // Error handling
                 .onErrorResume(CustomException.class, e -> Mono.just(new GroupCreateResponse(false, false, e.getMessage(), -1)))
-                .onErrorResume(e -> {
-                    System.out.println(e.getMessage());
-                    return Mono.just(new GroupCreateResponse(false, true, "server.error", -1));
-                });
+                .onErrorReturn(new GroupCreateResponse(false, true, "server.error", -1));
     }
 
     // Form for creating a group
@@ -96,7 +93,7 @@ public class GroupController {
             return Mono.just(new DescriptionEditResponse(false, true, "empty"));
         }
 
-        if(form.description().length() > 200) {
+        if(form.description().length() > 500) {
             return Mono.just(new DescriptionEditResponse(false, false, "description.too_long"));
         }
 

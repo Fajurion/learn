@@ -1,4 +1,4 @@
-package com.fajurion.learn.controller.account;
+package com.fajurion.learn.controller.account.invite;
 
 import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.invite.Invite;
