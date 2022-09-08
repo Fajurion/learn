@@ -12,6 +12,7 @@ public interface ETopicRepository extends ReactiveCrudRepository<ETopic, Integer
     @Query("select * from exam_topics where test = :exam order by id limit :limit offset :offset")
     Flux<ETopic> sortTopics(@Param("test") int exam, @Param("limit") int limit, @Param("offset") int offset);
 
+    @Query("select * from exam_topics where test = :test and topic = :topic")
     Flux<ETopic> getETopicsByTopicAndTest(@Param("test") int test, @Param("topic") int topic);
 
 }
