@@ -19,7 +19,7 @@ public class Exam {
     @Column @NonNull
     private long date;
 
-    @Column
+    @Column("groupID")
     private final int groupID;
 
 }

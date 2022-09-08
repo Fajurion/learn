@@ -64,7 +64,11 @@ public class ExamController {
 
             // Create exam
             return examRepository.save(new Exam(form.name(), "", form.date(), form.group()));
-        }).map(exam -> new ExamCreateResponse(true, false, "success"))
+        }).flatMap(exam -> {
+
+
+            return Mono.just( new ExamCreateResponse(true, false, "success"));
+        })
 
                 // Error handling
                 .onErrorResume(CustomException.class, e -> Mono.just(new ExamCreateResponse(false, false, e.getMessage())))
@@ -131,5 +135,45 @@ public class ExamController {
 
     // Response to editing the board
     public record EditBoardResponse(boolean success, boolean error, String message) {}
+
+    @PostMapping("/get")
+    @CrossOrigin
+    public Mono<ExamGetResponse> get(@RequestBody ExamGetForm form) {
+
+        // Check if form is valid
+        if(form.token() == null || form.exam() < 0) {
+            return Mono.just(new ExamGetResponse(false, false, "invalid", null));
+        }
+
+        // Check if session is valid
+        return sessionService.checkAndRefreshSession(form.token()).flatMap(session -> {
+
+            if(session == null) {
+                return Mono.error(new CustomException("session.expired"));
+            }
+
+            // Get exam
+            return examRepository.findById(form.exam()).onErrorReturn(new Exam("", "", -1, -1));
+        }).flatMap(exam -> {
+
+            // Check if exam exists
+            if(exam.getGroupID() == -1) {
+                return Mono.error(new CustomException("not_found"));
+            }
+
+            // Return response
+            return Mono.just(new ExamGetResponse(true, false, "success", exam));
+        })
+
+                // Error handling
+                .onErrorResume(CustomException.class, e -> Mono.just(new ExamGetResponse(false, false, e.getMessage(), null)))
+                .onErrorReturn(new ExamGetResponse(false, true, "server.error", null));
+    }
+
+    // Form for getting the exam
+    public record ExamGetForm(String token, int exam) {}
+
+    // Response to requesting an exam
+    public record ExamGetResponse(boolean success, boolean error, String message, Exam exam) {}
 
 }
