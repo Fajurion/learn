@@ -97,27 +97,28 @@ public class TopicController {
     public Mono<ListTopicsResponse> search(@RequestBody TopicSearchForm form) {
 
         // Check if form is valid
-        if(form.token() == null || form.query() == null) {
+        if(form.token() == null || form.query() == null || form.parent() < -1) {
             return Mono.just(new ListTopicsResponse(false, false, "invalid", null));
         }
 
         // Check if session is valid
         return sessionService.checkAndRefreshSession(form.token()).flatMap(session -> {
 
-                    if(session == null) {
-                        return Mono.error(new CustomException("session.expired"));
-                    }
+            if(session == null) {
+                return Mono.error(new CustomException("session.expired"));
+            }
 
-                    // Get all topics from the form
-                    return topicRepository.searchTopicsByName(form.query(), 50, form.offset()).collectList();
-                }).map(topics -> new ListTopicsResponse(true, false, "success", (ArrayList<Topic>) topics))
+            // Get all topics from the form
+            return form.parent() == -1 ? topicRepository.searchTopicsByName(form.query(), 50, form.offset()).collectList()
+                    : topicRepository.searchTopicsByNameWithParent(form.query(), 50, form.offset(), form.parent()).collectList();
+        }).map(topics -> new ListTopicsResponse(true, false, "success", (ArrayList<Topic>) topics))
 
-                // Error handling
-                .onErrorResume(CustomException.class, error -> Mono.just(new ListTopicsResponse(false, false, error.getMessage(), new ArrayList<>())))
-                .onErrorReturn(new ListTopicsResponse(false, true, "server.error", new ArrayList<>()));
+            // Error handling
+            .onErrorResume(CustomException.class, error -> Mono.just(new ListTopicsResponse(false, false, error.getMessage(), new ArrayList<>())))
+            .onErrorReturn(new ListTopicsResponse(false, true, "server.error", new ArrayList<>()));
     }
 
     // Form for search topics
-    public record TopicSearchForm(String token, String query, int offset) {}
+    public record TopicSearchForm(String token, String query, int parent, int offset) {}
 
 }
