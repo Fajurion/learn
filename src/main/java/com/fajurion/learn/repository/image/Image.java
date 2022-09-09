@@ -13,6 +13,9 @@ public class Image {
     private int id;
 
     @Column
+    final String type;
+
+    @Column
     final int creator;
 
     @Column

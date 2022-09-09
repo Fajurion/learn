@@ -1,8 +1,10 @@
 package com.fajurion.learn.controller.post;
 
+import com.beust.ah.A;
 import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.ranks.RankRepository;
 import com.fajurion.learn.repository.account.session.SessionService;
+import com.fajurion.learn.repository.image.ImageRepository;
 import com.fajurion.learn.repository.post.PostRepository;
 import com.fajurion.learn.repository.post.comments.CommentRepository;
 import com.fajurion.learn.repository.post.likes.LikeRepository;
@@ -10,6 +12,8 @@ import com.fajurion.learn.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
+
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/post")
@@ -33,19 +37,24 @@ public class PostDeletionController {
     // Repository for deleting likes
     private final LikeRepository likeRepository;
 
+    // Repository for deleting images
+    private final ImageRepository imageRepository;
+
     @Autowired
     public PostDeletionController(PostRepository postRepository,
                                   SessionService sessionService,
                                   AccountRepository accountRepository,
                                   RankRepository rankRepository,
                                   CommentRepository commentRepository,
-                                  LikeRepository likeRepository) {
+                                  LikeRepository likeRepository,
+                                  ImageRepository imageRepository) {
         this.postRepository = postRepository;
         this.sessionService = sessionService;
         this.accountRepository = accountRepository;
         this.rankRepository = rankRepository;
         this.commentRepository = commentRepository;
         this.likeRepository = likeRepository;
+        this.imageRepository = imageRepository;
     }
 
 
@@ -85,13 +94,24 @@ public class PostDeletionController {
                 return Mono.error(new RuntimeException("not_found"));
             }
 
+            // Get all images
+            ArrayList<Integer> images = new ArrayList<>();
+            for(String line : post.getContent().split("\n")) {
+                if(line.startsWith("@image:") && line.split(":").length > 1) {
+                    try {
+                        images.add(Integer.parseInt(line.split(":")[1]));
+                    } catch (Exception ignored) {}
+                }
+            }
+
             // Delete post
-            return postRepository.delete(post).thenReturn(post);
-        }).flatMap(v -> {
+            return Mono.zip(postRepository.delete(post).thenReturn(post),
+                    imageRepository.deleteAllById(images).thenReturn(post));
+        }).flatMap(tuple2 -> {
 
             // Delete comments related to post and likes
-            return Mono.zip(commentRepository.deleteAllByPost(form.post()).thenReturn(v),
-                    likeRepository.deleteAllByPost(form.post()).thenReturn(v));
+            return Mono.zip(commentRepository.deleteAllByPost(form.post()).thenReturn(tuple2.getT1()),
+                    likeRepository.deleteAllByPost(form.post()).thenReturn(tuple2.getT1()));
         }).map(v -> new DeletePostResponse(true, false, "success"))
 
                 // Error handling

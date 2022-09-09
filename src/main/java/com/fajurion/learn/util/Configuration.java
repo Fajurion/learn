@@ -26,7 +26,7 @@ public class Configuration {
         permissions.put("view.admin.panel", 70);
 
         // Initialize settings
-        settings.put("max.file.size", 1000 /* 1 KB */ * 1024); // in bytes (currently 1 MB)
+        settings.put("max.file.size", 1000 /* 1 KB */ * 4024); // in bytes (currently 4 MB)
         settings.put("session.timeout", 1000*60*60*24);
         settings.put("max.sessions", 10);
         settings.put("max.characters.post", 6000);

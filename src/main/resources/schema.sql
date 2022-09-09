@@ -9,7 +9,7 @@ create table if not exists tfa (id SERIAL NOT NULL, account INT, secret VARCHAR(
 create table if not exists topics (id SERIAL NOT NULL, parent INT, name VARCHAR(50), creator INT, locked BOOLEAN, category BOOLEAN, PRIMARY KEY (id));
 
 /* Create tables for Image Storage, Comments, Posts and Post Likes */
-create table if not exists images (id SERIAL NOT NULL, creator INT, image bytea, PRIMARY KEY (id));
+create table if not exists images (id SERIAL NOT NULL, type VARCHAR, creator INT, image bytea, PRIMARY KEY (id));
 create table if not exists posts (id SERIAL NOT NULL, topic INT, creator INT, likes INT, date BIGINT, title VARCHAR(50), content TEXT, PRIMARY KEY (id));
 create table if not exists likes (id SERIAL NOT NULL, account INT, post INT, PRIMARY KEY (id));
 create table if not exists comments (id SERIAL NOT NULL, topic INT, post INT, creator INT, date BIGINT, content VARCHAR(512), PRIMARY KEY (id));

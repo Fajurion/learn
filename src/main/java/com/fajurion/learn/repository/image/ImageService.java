@@ -8,6 +8,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Objects;
 
 @Service
 public class ImageService {
@@ -39,8 +40,8 @@ public class ImageService {
                 });
     }
 
-    public Mono<Boolean> checkFileType(Mono<FilePart> file) {
-        return file.map(fp -> fp.headers().getContentType() == MediaType.IMAGE_JPEG);
+    public Mono<String> checkFileType(Mono<FilePart> file) {
+        return file.map(fp -> Objects.requireNonNull(fp.headers().getContentType()).getType());
     }
 
 }

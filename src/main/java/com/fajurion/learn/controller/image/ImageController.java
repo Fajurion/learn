@@ -57,17 +57,20 @@ public class ImageController {
      * @return The image upload response
      */
     @PostMapping(value = "/upload", consumes = {"multipart/form-data"})
-    @ResponseBody @CrossOrigin
+    @CrossOrigin
     public Mono<ImageUploadResponse> uploadImage(@RequestPart("file") Mono<FilePart> file,
-                                    @RequestHeader("token") String token,
+                                    @RequestPart("token") String token,
                                     @RequestHeader("Content-Length") int contentLength) {
+
+        // Check if request is valid
+        if(token == null) {
+            return Mono.just(new ImageUploadResponse(false, false, "invalid"));
+        }
 
         // Check if file is too large
         if(contentLength > Configuration.settings.get("max.file.size")) {
             return Mono.just(new ImageUploadResponse(false, false, "file.too_large"));
         }
-
-        AtomicReference<Integer> userID = new AtomicReference<>();
 
         return sessionService.checkAndRefreshSession(token).flatMap(session -> {
 
@@ -75,37 +78,17 @@ public class ImageController {
                 return Mono.error(new CustomException("session.expired"));
             }
 
-            // Get account from session
-            return accountRepository.findById(session.getAccount());
-        }).flatMap(account -> {
-
-            if(account == null) {
-                return Mono.error(new CustomException("session.expired.deleted"));
-            }
-
-            // Set id in atomic reference
-            userID.set(account.getId());
-
-            // Get the rank of the user
-            return rankRepository.getRankByName(account.getRank());
-        }).flatMap(rank ->  {
-
-            // Check if the account has the required permission level
-            if(rank.getLevel() < Configuration.permissions.get("upload.image")) {
-                return Mono.error(new CustomException("no_permission"));
-            }
-
             // Check for correct file type
-            return service.checkFileType(file);
-        }).flatMap(check -> {
-            
-            if(!check) {
+            return Mono.zip(service.checkFileType(file), Mono.just(session.getAccount()));
+        }).flatMap(tuple2 -> {
+
+            if(!(tuple2.getT1().equals(MediaType.IMAGE_PNG.getType()) || tuple2.getT1().equals(MediaType.IMAGE_JPEG.getType()))) {
                 return Mono.error(new CustomException("upload.failed"));
             }
 
-            // Transform file part into byte array
-            return service.filePartToByteArray(file);
-        }).flatMap(array -> imageRepository.save(new Image(userID.get(), array)))
+            // Transform file part into byte array                 account id                    file type
+            return Mono.zip(service.filePartToByteArray(file), Mono.just(tuple2.getT2()), Mono.just(tuple2.getT1()));
+        }).flatMap(tuple2 -> imageRepository.save(new Image(tuple2.getT3(), tuple2.getT2(), tuple2.getT1())))
                 .flatMap(image -> {
 
                     if(image == null) {
@@ -123,25 +106,18 @@ public class ImageController {
     // Response to uploading an image
     public record ImageUploadResponse(boolean success, boolean error, String data) {}
 
-    @GetMapping(value = "/download/{id}", produces = MediaType.IMAGE_JPEG_VALUE) @CrossOrigin
-    public Mono<Resource> download(@PathVariable int id, @RequestHeader("token") String token) {
+    @GetMapping(value = "/download/{id}/{token}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_PNG_VALUE})
+    @CrossOrigin
+    public Mono<Resource> download(@PathVariable int id, @PathVariable String token) {
 
         // Check if session is valid
         return sessionService.checkAndRefreshSession(token).flatMap(session -> {
 
             if(session == null) {
-                return Mono.error(new CustomException("session.expired"));
+                return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND));
             }
 
-            // Get account from session
-            return accountRepository.findById(session.getAccount());
-        }).flatMap(account -> {
-
-            if(account == null) {
-                return Mono.error(new CustomException("session.expired.deleted"));
-            }
-
-            // Get the rank of the user
+            // Get the image
             return imageRepository.findById(id);
         }).flatMap(image -> {
 
