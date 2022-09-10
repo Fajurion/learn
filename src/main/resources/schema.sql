@@ -1,5 +1,3 @@
-drop table if exists accounts, tfa, sessions;
-
 /* Create tables for account management */
 create table if not exists accounts (id SERIAL NOT NULL, username VARCHAR(32), rank VARCHAR(32), email VARCHAR(32), password VARCHAR(512), invitor INT, data TEXT, PRIMARY KEY (id));
 create table if not exists sessions (id SERIAL NOT NULL, token VARCHAR(100), account INT, creation BIGINT, type VARCHAR(16), PRIMARY KEY (token));
