@@ -7,6 +7,9 @@ import com.fajurion.learn.repository.account.ranks.Rank;
 import com.fajurion.learn.repository.account.ranks.RankRepository;
 import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.groups.member.MemberService;
+import com.fajurion.learn.repository.tests.Exam;
+import com.fajurion.learn.repository.tests.ExamRepository;
+import com.fajurion.learn.repository.tests.ExamService;
 import com.fajurion.learn.util.Configuration;
 import com.fajurion.learn.util.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,15 +34,20 @@ public class StartAppController {
     // Repository for getting rank data
     private final RankRepository rankRepository;
 
+    // Service for getting exams
+    private final ExamService examService;
+
     @Autowired
     public StartAppController(MemberService memberService,
                               SessionService sessionService,
                               AccountRepository accountRepository,
-                              RankRepository rankRepository) {
+                              RankRepository rankRepository,
+                              ExamService examService) {
         this.memberService = memberService;
         this.sessionService = sessionService;
         this.accountRepository = accountRepository;
         this.rankRepository = rankRepository;
+        this.examService = examService;
     }
 
     @PostMapping("/start")
@@ -58,9 +66,9 @@ public class StartAppController {
                 return Mono.error(new CustomException("session.expired"));
             }
 
-            // Get groups and zip with tests TODO: Add class tests to start
+            // Get groups and zip with tests
             return Mono.zip(accountRepository.findById(session.getAccount()).onErrorReturn(new Account("", "", "", "", "", -1)),
-                    memberService.getGroups(session.getAccount(), 1000));
+                    memberService.getGroups(session.getAccount(), 1000), examService.getExams(session.getAccount(), 10, 0));
         }).flatMap(tuple -> Mono.zip(Mono.just(tuple), rankRepository.getRankByName(tuple.getT1().getRank()).onErrorReturn(new Rank("", -1)))).map(tuple2 -> {
 
             // Check for error
@@ -81,7 +89,7 @@ public class StartAppController {
             }
 
             // Return response
-            return new StartPageResponse(true, false, "success", tuple2.getT1().getT2(), null, tuple2.getT1().getT1(), permissions);
+            return new StartPageResponse(true, false, "success", tuple2.getT1().getT2(), tuple2.getT1().getT3(), tuple2.getT1().getT1(), permissions);
         })
                 // Error handling
                 .onErrorResume(CustomException.class, e -> Mono.just(new StartPageResponse(false, false, e.getMessage(), null, null, null, null)))
@@ -95,12 +103,9 @@ public class StartAppController {
     // Response entity for groups
     public record GroupEntity(String name, int id) {}
 
-    // Response entity for tests
-    public record TestEntity(String name, int id) {}
-
     // Response for getting start page endpoint
     public record StartPageResponse(boolean success, boolean error, String message,
-                                    List<GroupEntity> groups, List<TestEntity> tests, Account account,
+                                    List<GroupEntity> groups, List<Exam> tests, Account account,
                                     Collection<String> permissions) {}
 
 }

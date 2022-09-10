@@ -16,8 +16,8 @@ public class Configuration {
     public static void init() {
 
         // Initialize permissions
-        permissions.put("upload.image", 10);
-        permissions.put("create.topic", 5);
+        permissions.put("upload.image", 0);
+        permissions.put("create.topic", 0);
         permissions.put("delete.topic", 60);
         permissions.put("create.invite", 60);
         permissions.put("create.post.locked", 30);

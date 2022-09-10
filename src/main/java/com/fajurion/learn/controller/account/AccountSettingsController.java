@@ -45,12 +45,12 @@ public class AccountSettingsController {
         }).flatMap(account -> {
 
             // Check if current password is correct
-            if(!AccountUtil.getHash(account.getUsername(), account.getPassword()).equals(AccountUtil.getHash(account.getUsername(), form.currentPassword()))) {
+            if(!account.getPassword().equals(AccountUtil.getHash(account.getUsername(), form.currentPassword()))) {
                 return Mono.error(new CustomException("invalid.password"));
             }
 
             // Set new password
-            account.setPassword(form.newPassword());
+            account.setPassword(AccountUtil.getHash(account.getUsername(), form.newPassword()));
             return accountRepository.save(account);
         }).flatMap(account -> {
 
