@@ -2,17 +2,10 @@ package com.fajurion.learn;
 
 import com.fajurion.learn.repository.account.Account;
 import com.fajurion.learn.repository.account.AccountRepository;
-import com.fajurion.learn.repository.account.invite.Invite;
-import com.fajurion.learn.repository.account.invite.InviteRepository;
 import com.fajurion.learn.repository.account.ranks.Rank;
 import com.fajurion.learn.repository.account.ranks.RankRepository;
-import com.fajurion.learn.repository.post.likes.Like;
-import com.fajurion.learn.repository.post.likes.LikeRepository;
-import com.fajurion.learn.repository.topic.Topic;
-import com.fajurion.learn.repository.topic.TopicRepository;
 import com.fajurion.learn.util.AccountUtil;
 import com.fajurion.learn.util.Configuration;
-import com.fajurion.learn.util.CustomException;
 import io.r2dbc.spi.ConnectionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;

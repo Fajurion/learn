@@ -6,7 +6,6 @@ import com.fajurion.learn.repository.groups.member.MemberRepository;
 import com.fajurion.learn.repository.tests.Exam;
 import com.fajurion.learn.repository.tests.ExamRepository;
 import com.fajurion.learn.util.CustomException;
-import com.fajurion.learn.util.QueryUtil;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 

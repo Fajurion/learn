@@ -1,7 +1,6 @@
 package com.fajurion.learn.repository.image;
 
 import com.fajurion.learn.util.Configuration;
-import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;

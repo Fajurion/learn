@@ -18,8 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 @RestController
 @RequestMapping("/api/image")
 public class ImageController {

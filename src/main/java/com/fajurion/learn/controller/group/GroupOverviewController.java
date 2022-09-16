@@ -5,7 +5,6 @@ import com.fajurion.learn.repository.groups.Group;
 import com.fajurion.learn.repository.groups.GroupRepository;
 import com.fajurion.learn.repository.groups.GroupResponse;
 import com.fajurion.learn.repository.groups.GroupService;
-import com.fajurion.learn.repository.groups.member.Member;
 import com.fajurion.learn.repository.groups.member.MemberRepository;
 import com.fajurion.learn.repository.groups.member.MemberResponse;
 import com.fajurion.learn.repository.groups.member.MemberService;
@@ -18,7 +17,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @RequestMapping("/api/group")
 @RestController

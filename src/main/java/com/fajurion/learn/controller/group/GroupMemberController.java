@@ -3,7 +3,6 @@ package com.fajurion.learn.controller.group;
 import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.groups.Group;
 import com.fajurion.learn.repository.groups.GroupRepository;
-import com.fajurion.learn.repository.groups.GroupService;
 import com.fajurion.learn.repository.groups.member.Member;
 import com.fajurion.learn.repository.groups.member.MemberRepository;
 import com.fajurion.learn.util.CustomException;

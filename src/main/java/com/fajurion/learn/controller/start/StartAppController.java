@@ -1,6 +1,5 @@
 package com.fajurion.learn.controller.start;
 
-import com.beust.ah.A;
 import com.fajurion.learn.repository.account.Account;
 import com.fajurion.learn.repository.account.AccountRepository;
 import com.fajurion.learn.repository.account.ranks.Rank;
@@ -8,7 +7,6 @@ import com.fajurion.learn.repository.account.ranks.RankRepository;
 import com.fajurion.learn.repository.account.session.SessionService;
 import com.fajurion.learn.repository.groups.member.MemberService;
 import com.fajurion.learn.repository.tests.Exam;
-import com.fajurion.learn.repository.tests.ExamRepository;
 import com.fajurion.learn.repository.tests.ExamService;
 import com.fajurion.learn.util.Configuration;
 import com.fajurion.learn.util.CustomException;
@@ -16,7 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")

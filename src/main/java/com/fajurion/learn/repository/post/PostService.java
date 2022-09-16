@@ -6,7 +6,6 @@ import com.fajurion.learn.repository.post.likes.LikeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple4;
 
 import java.util.ArrayList;
